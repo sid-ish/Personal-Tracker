@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sidharth OS — Command Centre</title>
+<style>
+:root{
+  --bg:#F5F7FA;--surface:#fff;--elevated:#fff;--text:#14161c;--muted:#6b7280;--border:#e5e7eb;
+  --primary:#6366F1;--secondary:#8B5CF6;--accent:#06B6D4;--success:#22C55E;--warning:#F59E0B;--danger:#EF4444;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0B0D12;--surface:#11151D;--elevated:#171C26;--text:#eceef2;--muted:#9aa1ad;--border:#232838;}
+}
+:root[data-theme="dark"]{--bg:#0B0D12;--surface:#11151D;--elevated:#171C26;--text:#eceef2;--muted:#9aa1ad;--border:#232838;}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;height:100%}
+button{font-family:inherit;cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:200px;flex:0 0 auto;background:var(--surface);border-right:1px solid var(--border);padding:16px 10px;padding-top:calc(16px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:2px}
+.brand{font-weight:700;font-size:1rem;padding:4px 10px 16px}
+.brand span{display:block;font-size:.68rem;color:var(--muted);font-weight:400}
+.navbtn{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;border:none;background:transparent;color:var(--muted);text-align:left;font-size:.85rem}
+.navbtn.active{background:var(--primary);color:#fff}
+.navbtn:hover:not(.active){background:var(--elevated);color:var(--text)}
+.main{flex:1;min-width:0;padding:20px 24px 90px;max-width:920px;margin:0 auto;width:100%}
+.topbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px}
+.iconbtn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;padding:6px 10px;font-size:.8rem}
+h1{font-size:1.4rem;margin:2px 0 2px;letter-spacing:-.01em}
+.date{color:var(--muted);font-size:.85rem;margin-bottom:18px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.metric .n{font-size:1.5rem;font-weight:700}
+.metric .l{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.section{margin-bottom:20px}
+.section h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.focus-card{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-radius:16px;padding:18px 20px;border:none}
+.focus-card .tag{font-size:.68rem;opacity:.85;letter-spacing:.05em;text-transform:uppercase}
+.focus-card h3{margin:6px 0 2px;font-size:1.15rem}
+.focus-card p{margin:0 0 12px;opacity:.9;font-size:.85rem}
+.focus-card .why{font-size:.72rem;opacity:.75;margin-top:10px}
+.focus-empty{color:var(--muted);font-size:.85rem}
+.btn{background:#fff;color:var(--primary);border:none;border-radius:8px;padding:7px 14px;font-size:.82rem;font-weight:600}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border)}
+.task-row:last-child{border-bottom:none}
+.task-row.done .txt{text-decoration:line-through;color:var(--muted)}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--primary)}
+.txt{flex:1;font-size:.87rem}
+.pri{font-size:.62rem;padding:2px 7px;border-radius:6px;color:#fff;flex:0 0 auto;text-transform:uppercase}
+.pri.urgent{background:var(--danger)}.pri.high{background:var(--warning)}.pri.medium{background:var(--primary)}.pri.low{background:var(--muted)}
+.cat{font-size:.68rem;color:var(--muted);flex:0 0 auto}
+.mini{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:6px;padding:3px 7px;font-size:.72rem}
+.empty{color:var(--muted);font-size:.83rem;padding:8px 2px}
+.strip{display:flex;gap:6px;overflow-x:auto;padding:2px 0}
+.daychip{flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:.72rem;min-width:64px}
+.daychip .d{font-weight:700;color:var(--text)}
+.daychip .n{color:var(--muted);display:block;margin-top:2px;font-size:.68rem}
+.addbar{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.addbar input[type=text]{flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem}
+select{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:.8rem}
+.primary{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:600}
+.subject{margin-bottom:16px}
+.subject-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.subject-head h3{font-size:.92rem;margin:0}
+.subject-head .pct{font-size:.78rem;color:var(--muted)}
+.bar{height:6px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.bar>div{height:100%;background:var(--success);transition:width .3s}
+.topic{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+.topic-top{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}
+.topic-top .tname{font-size:.84rem;font-weight:500}
+.overall-pill{font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--border)}
+.substat{display:flex;gap:10px;margin-top:5px;font-size:.66rem;color:var(--muted)}
+.subtopics{margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.subrow{display:flex;align-items:center;gap:10px;padding:7px 0;flex-wrap:wrap;font-size:.78rem;border-bottom:1px dashed var(--border)}
+.subrow:last-child{border-bottom:none}
+.subrow .sname{flex:1;min-width:160px}
+.subrow label{display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--muted);white-space:nowrap}
+.subrow input[type=checkbox]{width:15px;height:15px}
+.revbtn{border:1px solid var(--border);background:var(--bg);color:var(--muted);border-radius:6px;padding:3px 9px;font-size:.68rem;white-space:nowrap}
+.revbtn.r1{color:var(--warning);border-color:var(--warning)}
+.revbtn.r2plus{color:var(--success);border-color:var(--success)}
+.notesbox{width:100%;margin-top:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:.78rem;font-family:inherit;resize:vertical;min-height:44px}
+.notes-label{font-size:.66rem;color:var(--muted);margin-top:8px;display:block}
+.calnav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.calcell{aspect-ratio:1;border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:.72rem;position:relative;cursor:pointer;background:var(--surface)}
+.calcell.other{visibility:hidden}
+.calcell.today{border-color:var(--primary);font-weight:700}
+.calcell.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
+.calcell .dot{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.calcell.sel .dot{background:#fff}
+.papertabs{display:flex;gap:6px;margin-bottom:10px}
+.papertab{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;padding:6px 16px;font-size:.8rem;font-weight:600}
+.papertab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.bottomnav{display:none}
+@media (max-width:760px){
+  .sidebar{display:none}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .main{padding:16px 14px 90px}
+  .bottomnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));justify-content:space-around;z-index:5}
+  .bottomnav button{background:none;border:none;color:var(--muted);font-size:.68rem;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .bottomnav button.active{color:var(--primary)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar" id="sidebar">
+    <div class="brand">Sidharth OS<span>Command Centre</span></div>
+    <button class="navbtn" data-view="today">Today</button>
+    <button class="navbtn" data-view="gate">GATE 2027</button>
+    <button class="navbtn" data-view="career">Career</button>
+    <button class="navbtn" data-view="dashboard">Home</button>
+    <button class="navbtn" data-view="knowledge">Knowledge</button>
+    <button class="navbtn" data-view="projects">Projects</button>
+    <button class="navbtn" data-view="calendar">Calendar</button>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <button class="iconbtn" id="themeBtn">Theme</button>
+    </div>
+    <div id="view"></div>
+  </div>
+</div>
+<div class="bottomnav" id="bottomnav">
+  <button data-view="today"><span>Today</span></button>
+  <button data-view="gate"><span>GATE</span></button>
+  <button data-view="career"><span>Career</span></button>
+  <button data-view="dashboard"><span>Home</span></button>
+  <button data-view="knowledge"><span>Knowledge</span></button>
+  <button data-view="projects"><span>Projects</span></button>
+  <button data-view="calendar"><span>Calendar</span></button>
+</div>
+
+<script>
+/* ---------- DB LAYER ---------- */
+const DB = new Promise((res,rej)=>{
+  const r = indexedDB.open('sidharthos',7);
+  r.onupgradeneeded = e=>{
+    const db=e.target.result;
+    if(!db.objectStoreNames.contains('tasks')) db.createObjectStore('tasks',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('gateTopics')) db.createObjectStore('gateTopics',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('meta')) db.createObjectStore('meta',{keyPath:'key'});
+    if(!db.objectStoreNames.contains('projects')) db.createObjectStore('projects',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('mistakes')) db.createObjectStore('mistakes',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('studySessions')) db.createObjectStore('studySessions',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('pyqRecords')) db.createObjectStore('pyqRecords',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('internships')) db.createObjectStore('internships',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('universities')) db.createObjectStore('universities',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('skills')) db.createObjectStore('skills',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('resumeEntries')) db.createObjectStore('resumeEntries',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('events')) db.createObjectStore('events',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('resources')) db.createObjectStore('resources',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('documents')) db.createObjectStore('documents',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('notes')) db.createObjectStore('notes',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('achievements')) db.createObjectStore('achievements',{keyPath:'id'});
+  };
+  r.onsuccess=e=>res(e.target.result);
+  r.onerror=e=>rej(e);
+});
+async function idbAll(store){const db=await DB;return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const rq=tx.objectStore(store).getAll();rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error);});}
+async function idbPut(store,val){const db=await DB;return new Promise((res,rej)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(val);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+async function idbDel(store,key){const db=await DB;return new Promise((res,rej)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+async function idbGet(store,key){const db=await DB;return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const rq=tx.objectStore(store).get(key);rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error);});}
+
+/* ---------- GATE ME SYLLABUS (subtopic-level, official GATE 2027 ME syllabus) ---------- */
+const GATE_ME_SYLLABUS = {
+"Engineering Mathematics":{
+  "Linear Algebra":["Matrix algebra","Systems of linear equations","Eigenvalues and eigenvectors"],
+  "Calculus":["Limit, continuity, differentiability, mean value theorems","Definite & improper integrals; double/triple integrals","Partial derivatives, Taylor series, maxima/minima, Fourier series","Gradient, divergence, curl; Gauss/Stokes/Green's theorems"],
+  "Differential Equations":["First & higher order linear ODEs, Euler-Cauchy equation","Initial and boundary value problems","Laplace transforms","Heat, wave, Laplace's equation solutions"],
+  "Complex Variables":["Analytic functions, Cauchy-Riemann equations","Cauchy's integral theorem & formula","Taylor and Laurent series"],
+  "Probability and Statistics":["Probability, conditional probability, sampling theorems","Mean, median, mode, standard deviation","Random variables; binomial, Poisson, normal distributions"],
+  "Numerical Methods":["Solving linear/non-linear algebraic equations","Trapezoidal & Simpson's rule integration","Single/multi-step methods for ODEs"]
+},
+"Applied Mechanics and Design":{
+  "Engineering Mechanics":["Free-body diagrams and equilibrium","Friction: rolling resistance, belt-pulley, brakes, clutches, screw jack, wedge","Plane trusses and frames; virtual work","Kinematics/dynamics of rigid bodies; impulse-momentum, energy"],
+  "Mechanics of Materials":["Stress, strain, elastic constants; Mohr's circle","Thin-walled pressure vessels; SFD & BMD","Bending & shear stresses; shear centre; deflection of beams","Torsion; Euler's column theory; energy methods; thermal stresses","Strain gauges/rosettes; mechanical properties, hardness, impact strength"],
+  "Theory of Machines":["Displacement/velocity/acceleration analysis of mechanisms","Dynamic analysis of linkages; cams","Gears and gear trains; flywheels and governors","Balancing of reciprocating/rotating masses; gyroscope"],
+  "Vibrations":["Free & forced vibration (1-DOF, 2-DOF); damping","Vibration isolation, transmissibility ratio, resonance","Critical speeds of shafts","Control systems: PID, transfer function"],
+  "Machine Design":["Static/dynamic loading; failure theories; fatigue & S-N diagram","Bolted, riveted, welded joints","Shafts, gears, belt drives, bearings, brakes, clutches, springs"]
+},
+"Fluid Mechanics and Thermal Sciences":{
+  "Fluid Mechanics":["Fluid properties, statics, forces on submerged bodies","Control-volume analysis: mass, momentum, energy","Bernoulli's equation; dimensional analysis","Viscous flow, boundary layer, turbulent flow, pipe losses","Compressible flow; converging & converging-diverging nozzles"],
+  "Heat Transfer":["Conduction: 1D, resistance concept, fins, unsteady conduction","Convection: boundary layer, dimensionless numbers, correlations","Boiling and condensation","Heat exchangers: LMTD, NTU methods","Radiation: Stefan-Boltzmann, Wien's law, view factors"],
+  "Thermodynamics":["Systems, processes, properties of pure substances","Zeroth, first, second laws; work, heat, entropy","Analysis of closed/open systems; property charts","Availability, irreversibility, thermodynamic relations"],
+  "Power Engineering & IC Engines":["Vapour and gas power cycles; regeneration, reheat","Otto, Diesel, dual cycles","Air-fuel ratio, equivalence ratio, combustion basics"],
+  "Refrigeration and Air-Conditioning":["Vapour and gas refrigeration/heat pump cycles","Properties of moist air, psychrometric chart","Basic psychrometric processes"],
+  "Turbomachinery":["Impulse & reaction principles; velocity diagrams","Pelton, Francis, Kaplan turbines; steam & gas turbines","Compressors and pumps; pump characteristics"]
+},
+"Materials, Manufacturing and Industrial Engineering":{
+  "Engineering Materials":["Crystal structure, phase diagrams, heat treatment","Properties of metals, polymers, composites, ceramics","Engineering and true stress-strain diagrams"],
+  "Casting, Forming and Joining Processes":["Casting: patterns, moulds, cores, gating/riser design, defects","Plastic deformation, yield criteria; hot/cold working","Bulk & sheet forming; powder metallurgy","Welding, brazing, soldering; solid-state welding; NDT"],
+  "Machining and Machine Tool Operations":["Basic machining operations and machine tools","Cutting tools; tool geometry (ASA, ORS); mechanics of machining","Tool materials, tool life, tool wear; economics of machining","Abrasive & non-traditional machining; jigs and fixtures"],
+  "Additive Manufacturing":["Principles of AM processes","Advantages, limitations, applications"],
+  "Metrology and Inspection":["Limits, fits, tolerances; linear/angular measurement","Comparators, interferometry, form/finish measurement","Alignment/testing methods; tolerance analysis; CMM"],
+  "CAD/CAM and Automation":["CAD/CAM concepts and integration","NC/CNC machines and programming","Pneumatic/hydraulic actuators; PLCs"],
+  "Production Planning and Control":["Work study, productivity, forecasting","Aggregate planning, scheduling, MRP","Six sigma, lean manufacturing; inventory control; quality/reliability"],
+  "Operations Research":["Linear programming, simplex method","Transportation, assignment, network flow models","Queuing models; PERT and CPM"]
+}
+};
+
+/* ---------- GATE RA SYLLABUS (Robotics & Automation, official 2027) ---------- */
+const GATE_RA_SYLLABUS = {
+"Engineering Mathematics":{
+  "Linear Algebra":["Matrices: transpose, determinant, rank, eigenvalues/eigenvectors, trace, adjoint, systems of linear equations"],
+  "Calculus":["Limits, continuity, differentiability, mean value theorems, indeterminate forms","Definite/improper integrals, double/triple integrals, Taylor series, maxima-minima","Gradient, divergence, curl, vector identities"],
+  "Differential Equations":["First-order & higher-order linear ODEs, Euler-Cauchy equation","Initial/boundary value problems, Laplace transforms","Heat, wave, Laplace's equation solutions; Fourier series"],
+  "Probability and Statistics":["Axioms of probability, conditional probability, hypothesis testing","Mean, median, mode, SD, binomial/Poisson/normal distributions","PDF and CDF"],
+  "Numerical Methods":["Linear/non-linear algebraic equations, trapezoidal & Simpson's rules","Finite differences, explicit single/multi-step ODE methods"]
+},
+"Basics of Mechatronics":{
+  "Network Elements & Analysis":["Ideal sources, dependent sources, R/L/C/M elements","KCL, KVL, node/mesh analysis, Thevenin/Norton/superposition/max power theorems","Transient & AC analysis, resonance, two-port networks, 3-phase circuits, power factor"],
+  "Digital Circuits":["Boolean algebra","Combinational circuits: multiplexers, encoders, decoders","Sequential circuits: flip-flops, counters"],
+  "Sensors":["Resistive, capacitive, inductive, piezoelectric, Hall-effect sensors & signal conditioning","Transducers: displacement, velocity, acceleration, force, torque, pressure"],
+  "Actuators":["Hydraulic and pneumatic actuators: performance, torque-speed characteristics","DC motors, stepper motors, servo motors"],
+  "Engineering Mechanics":["Free-body diagrams & equilibrium; friction, rolling friction, belt-pulley","Trusses and frames","Kinematics and dynamics of rigid bodies in plane motion"],
+  "Programming":["Flowcharts & pseudocode","Python: data types, operators, conditionals, loops, functions, arrays, dicts, strings, recursion"],
+  "Data Structures":["Stack, queue, linked list","Binary search tree, binary heap, graph"]
+},
+"Principles of Robotics and Automation":{
+  "Robot Classification & Kinematics":["Serial & parallel manipulators, links/joints, DOF, coordinate systems","Rotation matrices (2D/3D), homogeneous transformations, forward kinematics"],
+  "Robot Applications":["Point-to-point & continuous path control, end-effector types","Robot accuracy and repeatability"],
+  "Computer Integrated Manufacturing":["Automation in manufacturing, PLCs, automated material handling & storage/retrieval","Automated identification/detection systems, CNC, multi-axis positioning, concurrent design planning"]
+},
+"Electrical Engineering":{
+  "Analog Circuits & Embedded Systems":["Analog filters, amplifiers, feedback amplifiers, op-amps","Oscillators, VCOs, timers, Schmitt triggers, sample-and-hold, ADC/DAC, SMPS","Microprocessor/microcontroller components, interrupt handling, memory/IO interfacing, data acquisition"],
+  "Signals and Systems":["Continuous/discrete signals, LTI & causal systems","Fourier series/transform, Laplace transform, Z-transform, sampling theorem, RMS/average value"],
+  "Control Systems":["Mathematical modeling, transfer functions, block diagrams, signal flow graphs","Transient/steady-state analysis, Routh-Hurwitz & Nyquist stability","Bode plots, root loci, lag/lead compensators, P/PI/PID controllers"]
+},
+"Mechanical Engineering":{
+  "Mechanics of Materials":["Stress-strain, elastic constants, Poisson's ratio, Mohr's circle","Thin cylinders, SFD/BMD, bending/shear stresses, shear centre, deflection of beams","Torsion, Euler's column theory, Castigliano's theorems, thermal stresses, strain gauges/rosettes"],
+  "Kinematics and Dynamics":["Displacement/velocity/acceleration analysis of plane mechanisms, dynamic analysis of linkages","Gears and gear trains, balancing of reciprocating/rotating masses, gyroscope","Vibrations: free & forced (1-DOF), damping, isolation, resonance, critical speeds"],
+  "Machine Design & CIM":["Design for static/dynamic loading, failure theories, fatigue & S-N diagram","Bolted/riveted/welded joints, shafts, bearings, brakes, clutches, springs","CAD/CAM concepts and integration, additive manufacturing"]
+}
+};
+
+/* ---------- GATE GA SYLLABUS (General Aptitude — common to every paper) ---------- */
+const GATE_GA_SYLLABUS = {
+"General Aptitude":{
+  "Verbal Aptitude":["Basic English grammar: tenses, articles, adjectives, prepositions, conjunctions, verb-noun agreement","Basic vocabulary: words, idioms, phrases in context","Reading and comprehension, narrative sequencing"],
+  "Quantitative Aptitude":["Data interpretation: bar/pie graphs, 2D/3D plots, maps, tables","Numerical computation: ratios, percentages, powers, logs, permutations/combinations, series","Mensuration and geometry; elementary statistics and probability"],
+  "Analytical Aptitude":["Logic: deduction and induction","Analogy","Numerical relations and reasoning"],
+  "Spatial Aptitude":["Transformation of shapes: translation, rotation, scaling, mirroring","Assembling and grouping","Paper folding, cutting, patterns in 2D and 3D"]
+}
+};
+
+const SYLLABI = {ME:GATE_ME_SYLLABUS, RA:GATE_RA_SYLLABUS, GA:GATE_GA_SYLLABUS};
+let gatePaper = 'ME';
+
+async function ensurePaperSeeded(paper){
+  const flagKey = 'gateSeeded_'+paper;
+  const done = await idbGet('meta',flagKey);
+  if(done) return;
+  const existing = await idbAll('gateTopics');
+  if(existing.some(t=>t.paper===paper)){ await idbPut('meta',{key:flagKey,value:true}); return; }
+  const syllabus = SYLLABI[paper];
+  for(const subject in syllabus){
+    for(const topic in syllabus[subject]){
+      const subtopics = syllabus[subject][topic].map(n=>({n,s:false,p:false,r:0}));
+      await idbPut('gateTopics',{id:paper.toLowerCase()+'-'+subject+'-'+topic,paper,subject,topic,subtopics,notes:''});
+    }
+  }
+  await idbPut('meta',{key:flagKey,value:true});
+}
+
+async function ensureGateSeeded(){
+  const v2 = await idbGet('meta','gateSchemaV2');
+  if(v2) return;
+  const db = await DB;
+  await new Promise((res,rej)=>{const tx=db.transaction('gateTopics','readwrite');tx.objectStore('gateTopics').clear();tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});
+  await idbPut('meta',{key:'gateSchemaV2',value:true});
+}
+
+/* ---------- GATE 91-DAY SCHEDULE (from your Prep Tracker workbook, 1 Oct – 30 Dec 2026) ---------- */
+const SCHED_SUBJ = {EM:'Engineering Mathematics',AMD:'Applied Mechanics & Design',FMTS:'Fluid Mechanics & Thermal Sciences',MMIE:'Materials, Manufacturing & Industrial Engg',REV:'Revision / Mock Test',BUF:'Buffer / Catch-up'};
+// [day,date,subjCode,topic (or, for buffer days, the "if ahead" clause),ga (or, for buffer days, the spaced-retrieval target),mainHrs,gaHrs,kind: s=study b=buffer t=sectional-test m=mock/revision
+const SCHEDULE_91 = [
+[1,'2026-10-01','EM','Linear Algebra: matrix algebra, systems of linear equations, eigenvalues & eigenvectors','Verbal: grammar & tenses',3.75,0.75,'s'],
+[2,'2026-10-02','EM','Calculus: limits, continuity, differentiability, mean value theorems, indeterminate forms + PYQs (1st pass)','Verbal: vocabulary & idioms',3.75,0.75,'s'],
+[3,'2026-10-03','EM','Calculus: definite & improper integrals, double & triple integrals + PYQs (1st pass)','Verbal: reading comprehension',3.75,0.75,'s'],
+[4,'2026-10-04','EM','Calculus: partial derivatives, total derivative, Taylor series, maxima & minima + PYQs (1st pass)','Verbal: narrative sequencing',3.75,0.75,'s'],
+[5,'2026-10-05','EM',"Calculus: Fourier series, gradient/divergence/curl, Gauss/Stokes/Green's theorems + PYQs (1st pass)",'Quantitative: percentages/ratios/powers/logs',3.75,0.75,'s'],
+[6,'2026-10-06','EM','Linear Algebra + Calculus: mixed PYQ set (15-20 problems, 1st-pass consolidation)','Quantitative: permutations, combinations & series',3.75,0.75,'s'],
+[7,'2026-10-07','BUF','If ahead: Linear Algebra + Calculus sectional test.','n/a (Week 1) — use for GA catch-up if needed.',2,0,'b'],
+[8,'2026-10-08','EM','Differential Equations: first & higher order linear DEs, Euler-Cauchy equation + PYQs (1st pass)','Quantitative: data interpretation',3.75,0.75,'s'],
+[9,'2026-10-09','EM','Differential Equations: initial/boundary value problems, Laplace transforms + PYQs (1st pass)','Quantitative: mensuration & geometry',3.75,0.75,'s'],
+[10,'2026-10-10','EM',"DE: heat/wave/Laplace's equation solutions + Complex Variables: analytic functions, Cauchy-Riemann eqns",'Quantitative: elementary statistics & probability',3.75,0.75,'s'],
+[11,'2026-10-11','EM',"Complex Variables: Cauchy's integral theorem, contour integrals, Taylor & Laurent series + PYQs",'Analytical: deduction & induction',3.75,0.75,'s'],
+[12,'2026-10-12','EM','Probability & Statistics: full topic + PYQs (1st pass)','Analytical: analogy',3.75,0.75,'s'],
+[13,'2026-10-13','EM','Numerical Methods: full topic + PYQs (1st pass)','Analytical: numerical relations & reasoning',3.75,0.75,'s'],
+[14,'2026-10-14','BUF','If ahead: FULL Engineering Mathematics sectional test — log every mistake.','Week 1 topics (Linear Algebra/Calculus).',2,0,'b'],
+[15,'2026-10-15','AMD','Engineering Mechanics: free-body diagrams & equilibrium + PYQs (1st pass)','Spatial: transformation of shapes',3.75,0.75,'s'],
+[16,'2026-10-16','AMD','Engineering Mechanics: friction — rolling resistance, belt-pulley, brakes, clutches, screw jack, wedge + PYQs','Spatial: assembling & grouping',3.75,0.75,'s'],
+[17,'2026-10-17','AMD','Engineering Mechanics: plane trusses & frames, virtual work + PYQs (1st pass)','Spatial: folding/cutting/patterns',3.75,0.75,'s'],
+[18,'2026-10-18','AMD','Engineering Mechanics: kinematics/dynamics of rigid bodies, impulse-momentum, energy + PYQs','Verbal: grammar & tenses',3.75,0.75,'s'],
+[19,'2026-10-19','AMD','Mechanics of Materials (SOM): stress & strain, elastic constants and relationships','Verbal: vocabulary & idioms',3.75,0.75,'s'],
+[20,'2026-10-20','AMD',"SOM: stress/strain transformations in 2D, Mohr's circle for plane stress & strain + PYQs",'Verbal: reading comprehension',3.75,0.75,'s'],
+[21,'2026-10-21','BUF','If ahead: Engineering Mechanics sectional test.','Engineering Mathematics (Linear Algebra/Calculus/DE).',2,0,'b'],
+[22,'2026-10-22','AMD','SOM: thin-walled pressure vessels, shear force & bending moment diagrams + PYQs','Verbal: narrative sequencing',3.75,0.75,'s'],
+[23,'2026-10-23','AMD','SOM: bending & shear stresses, concept of shear centre + PYQs','Quantitative: percentages/ratios/powers/logs',3.75,0.75,'s'],
+[24,'2026-10-24','AMD','SOM: deflection of beams, torsion of circular shafts + PYQs','Quantitative: permutations, combinations & series',3.75,0.75,'s'],
+[25,'2026-10-25','AMD',"SOM: Euler's column theory, energy methods, thermal stresses, strain gauges/rosettes, material testing",'Quantitative: data interpretation',3.75,0.75,'s'],
+[26,'2026-10-26','AMD','DEDICATED SOM SECTIONAL TEST (timed, mixed) + full error-log entry for every mistake','',4.5,0,'t'],
+[27,'2026-10-27','AMD','Theory of Machines: displacement/velocity/acceleration of mechanisms, dynamic analysis of linkages + cams','Quantitative: mensuration & geometry',3.75,0.75,'s'],
+[28,'2026-10-28','BUF','If ahead: Theory of Machines (mechanisms, cams, gears) sectional test.','SOM (2nd retrieval since Day 26 test).',2,0,'b'],
+[29,'2026-10-29','AMD','Theory of Machines: gears & gear trains + PYQs (1st pass)','Quantitative: elementary statistics & probability',3.75,0.75,'s'],
+[30,'2026-10-30','AMD','Theory of Machines: flywheels & governors + PYQs (1st pass)','Analytical: deduction & induction',3.75,0.75,'s'],
+[31,'2026-10-31','AMD','Theory of Machines: balancing of reciprocating & rotating masses, gyroscope + PYQs','Analytical: analogy',3.75,0.75,'s'],
+[32,'2026-11-01','AMD','DEDICATED TOM SECTIONAL TEST (timed, mixed — mechanisms through gyroscope) + error-log entry','',4.5,0,'t'],
+[33,'2026-11-02','AMD','Vibrations: free & forced vibration of single-DOF systems, damping estimation & effects + PYQs','Analytical: numerical relations & reasoning',3.75,0.75,'s'],
+[34,'2026-11-03','AMD','Vibrations: two-DOF systems, vibration isolation, transmissibility ratio, resonance, critical speeds','Spatial: transformation of shapes',3.75,0.75,'s'],
+[35,'2026-11-04','BUF','If ahead: Vibrations sectional test + error-log entry.','Theory of Machines (2nd retrieval since Day 32 test).',2,0,'b'],
+[36,'2026-11-05','AMD','Machine Design: design for static & dynamic loading, failure theories + PYQs','Spatial: assembling & grouping',3.75,0.75,'s'],
+[37,'2026-11-06','AMD','Machine Design: fatigue strength & the S-N diagram + PYQs','Spatial: folding/cutting/patterns',3.75,0.75,'s'],
+[38,'2026-11-07','AMD','Machine Design: bolted, riveted & welded joints + PYQs','Verbal: grammar & tenses',3.75,0.75,'s'],
+[39,'2026-11-08','AMD','Machine Design: shafts, gears, belt drives + PYQs','Verbal: vocabulary & idioms',3.75,0.75,'s'],
+[40,'2026-11-09','AMD','Machine Design: rolling & sliding contact bearings, brakes & clutches, springs + PYQs','Verbal: reading comprehension',3.75,0.75,'s'],
+[41,'2026-11-10','AMD','Machine Design: mixed PYQ consolidation across all sub-topics (2nd-pass, timed practice)','Verbal: narrative sequencing',3.75,0.75,'s'],
+[42,'2026-11-11','BUF','If ahead: FULL Applied Mechanics & Design mixed sectional test — log every mistake.','Vibrations + Machine Design.',2,0,'b'],
+[43,'2026-11-12','FMTS','Fluid Mechanics: fluid properties, fluid statics + PYQs (1st pass)','Quantitative: percentages/ratios/powers/logs',3.75,0.75,'s'],
+[44,'2026-11-13','FMTS','Fluid Mechanics: forces on submerged bodies, stability of floating bodies + PYQs','Quantitative: permutations, combinations & series',3.75,0.75,'s'],
+[45,'2026-11-14','FMTS','Fluid Mechanics: control-volume analysis of mass, momentum & energy + PYQs','Quantitative: data interpretation',3.75,0.75,'s'],
+[46,'2026-11-15','FMTS','Fluid Mechanics: fluid acceleration, continuity & momentum equations, velocity potential + PYQs','Quantitative: mensuration & geometry',3.75,0.75,'s'],
+[47,'2026-11-16','FMTS',"Fluid Mechanics: Bernoulli's equation, dimensional analysis + PYQs",'Quantitative: elementary statistics & probability',3.75,0.75,'s'],
+[48,'2026-11-17','FMTS','Fluid Mechanics: viscous flow, boundary layer — concepts + PYQs (not exhaustive depth)','Analytical: deduction & induction',3.75,0.75,'s'],
+[49,'2026-11-18','BUF','If ahead: Fluid Mechanics Part 1 (statics through Bernoulli) sectional test.','Machine Design.',2,0,'b'],
+[50,'2026-11-19','FMTS','Fluid Mechanics: turbulent flow, flow through pipes, head losses + PYQs','Analytical: analogy',3.75,0.75,'s'],
+[51,'2026-11-20','FMTS','Fluid Mechanics: 1D compressible flow, converging/converging-diverging nozzles + PYQs only','Analytical: numerical relations & reasoning',3.75,0.75,'s'],
+[52,'2026-11-21','FMTS','Heat Transfer: modes of heat transfer, 1D conduction, resistance concept/electrical analogy','Spatial: transformation of shapes',3.75,0.75,'s'],
+[53,'2026-11-22','FMTS','Heat Transfer: fins, unsteady conduction, lumped parameter system — numerical practice','Spatial: assembling & grouping',3.75,0.75,'s'],
+[54,'2026-11-23','FMTS','DEDICATED Fluid Mechanics + Heat Transfer (Part 1) SECTIONAL TEST + error-log entry','',4.5,0,'t'],
+[55,'2026-11-24','FMTS','Heat Transfer: convection — boundary layer, dimensionless parameters, correlations (flat plates/pipes)','Spatial: folding/cutting/patterns',3.75,0.75,'s'],
+[56,'2026-11-25','BUF','If ahead: Fluid Mechanics (Part 2) + Heat Transfer (conduction/fins) sectional test.','Theory of Machines / Vibrations.',2,0,'b'],
+[57,'2026-11-26','FMTS','Heat Transfer: boiling & condensation, effect of turbulence — numerical practice','Verbal: grammar & tenses',3.75,0.75,'s'],
+[58,'2026-11-27','FMTS',"Heat Transfer: heat exchangers (LMTD & NTU), radiation (Stefan-Boltzmann, Wien's law, view factors)",'Verbal: vocabulary & idioms',3.75,0.75,'s'],
+[59,'2026-11-28','FMTS','DEDICATED Heat Transfer SECTIONAL TEST (full topic) + error-log entry','',4.5,0,'t'],
+[60,'2026-11-29','FMTS','Thermodynamics: systems & processes, pure substance properties, ideal & real gas behaviour + PYQs','Verbal: reading comprehension',3.75,0.75,'s'],
+[61,'2026-11-30','FMTS','Thermodynamics: zeroth/first/second laws, work/heat/energy/entropy changes + PYQs','Verbal: narrative sequencing',3.75,0.75,'s'],
+[62,'2026-12-01','FMTS','Thermodynamics: first & second law analysis of closed & open systems + PYQs','Quantitative: percentages/ratios/powers/logs',3.75,0.75,'s'],
+[63,'2026-12-02','BUF','If ahead: Fluid Mechanics (full) sectional test.','Fluid Mechanics Part 1.',2,0,'b'],
+[64,'2026-12-03','FMTS','Thermodynamics: property charts/tables, availability & irreversibility, thermodynamic relations + PYQs','Quantitative: permutations, combinations & series',3.75,0.75,'s'],
+[65,'2026-12-04','FMTS','Applications — Power Engg (1/1.5 days): vapour power cycles, regeneration & reheat','Quantitative: data interpretation',3.75,0.75,'s'],
+[66,'2026-12-05','FMTS','Applications — Power Engg (2/1.5 days): gas power cycles + PYQs (1st pass)','Quantitative: mensuration & geometry',3.75,0.75,'s'],
+[67,'2026-12-06','FMTS','Applications — IC Engines: air-standard Otto/Diesel/dual cycles, combustion basics + PYQs','Quantitative: elementary statistics & probability',3.75,0.75,'s'],
+[68,'2026-12-07','FMTS','Applications — Refrigeration & AC: vapour & gas refrigeration/heat pump cycles + PYQs','Analytical: deduction & induction',3.75,0.75,'s'],
+[69,'2026-12-08','FMTS','Applications — Psychrometry: moist air, psychrometric chart + Turbomachinery start: impulse/reaction, velocity diagrams','Analytical: analogy',3.75,0.75,'s'],
+[70,'2026-12-09','FMTS','Applications — Turbomachinery: Pelton/Francis/Kaplan turbines, steam & gas turbines, compressors, pumps + PYQs','Analytical: numerical relations & reasoning',3.75,0.75,'s'],
+[71,'2026-12-10','BUF','If ahead: FULL Fluid Mechanics & Thermal Sciences sectional test — log every mistake.','Thermodynamics + Heat Transfer.',2,0,'b'],
+[72,'2026-12-11','MMIE','Engineering Materials: crystal structure, phase diagrams, heat treatment, properties, stress-strain','Spatial: transformation of shapes',3.75,0.75,'s'],
+[73,'2026-12-12','MMIE','Casting: process types, patterns/moulds/core, solidification, riser/gating design, defects — numerical + PYQs','Spatial: assembling & grouping',3.75,0.75,'s'],
+[74,'2026-12-13','MMIE','Forming: plastic deformation & yield criteria, hot/cold working, bulk & sheet forming, powder metallurgy + PYQs','Spatial: folding/cutting/patterns',3.75,0.75,'s'],
+[75,'2026-12-14','MMIE','Joining: welding, brazing, soldering, solid-state welding, adhesive bonding, NDT + PYQs','Verbal: grammar & tenses',3.75,0.75,'s'],
+[76,'2026-12-15','MMIE','Machining: basic operations & machine tools, cutting tools, tool geometry (ASA/ORS) — numerical + PYQs','Verbal: vocabulary & idioms',3.75,0.75,'s'],
+[77,'2026-12-16','MMIE','Machining: mechanics of machining, tool materials/life/wear, economics, abrasive/non-traditional, jigs & fixtures','Verbal: reading comprehension',3.75,0.75,'s'],
+[78,'2026-12-17','BUF','If ahead: Casting/Forming/Joining/Machining sectional test.','Engineering Materials.',2,0,'b'],
+[79,'2026-12-18','MMIE','Metrology & Inspection: limits/fits/tolerances, measurement, comparators, interferometry, CMM + PYQs','Verbal: narrative sequencing',3.75,0.75,'s'],
+[80,'2026-12-19','MMIE','Additive Manufacturing: principles, applications + CAD/CAM basics, NC/CNC machines & programming','Quantitative: percentages/ratios/powers/logs',3.75,0.75,'s'],
+[81,'2026-12-20','MMIE','PLC + Automation: pneumatic/electro-pneumatic/hydraulic actuators, PLCs + PYQs','Quantitative: permutations, combinations & series',3.75,0.75,'s'],
+[82,'2026-12-21','MMIE','Production Planning & Control: work study, forecasting, aggregate planning, MRP, six sigma, lean, inventory + PYQs','Quantitative: data interpretation',3.75,0.75,'s'],
+[83,'2026-12-22','MMIE','Operations Research: LP & Simplex, transportation & assignment, network flow, queuing, PERT & CPM','Quantitative: mensuration & geometry',3.75,0.75,'s'],
+[84,'2026-12-23','BUF','If ahead: FULL Materials/Manufacturing/Industrial Engg sectional test — log every mistake.','Casting/Forming/Joining/Machining (mixed).',2,0,'b'],
+[85,'2026-12-24','REV','Mixed revision: Engineering Mathematics + GA — pure PYQs, mixed order + revisit error-log (Weeks 1-2)','',4.5,0,'m'],
+[86,'2026-12-25','REV','Mixed revision: Applied Mechanics & Design (all 5 topics) — mixed PYQs + revisit error-log (Weeks 3-6)','',4.5,0,'m'],
+[87,'2026-12-26','REV','Mixed revision: Fluid Mechanics & Heat Transfer — mixed PYQs + revisit error-log (Weeks 7-9)','',4.5,0,'m'],
+[88,'2026-12-27','REV','Mixed revision: Thermodynamics & Applications — mixed PYQs + revisit error-log (Weeks 9-10)','',4.5,0,'m'],
+[89,'2026-12-28','REV','Mixed revision: Materials, Manufacturing & Industrial Engg — mixed PYQs + revisit error-log (Weeks 11-12)','',4.5,0,'m'],
+[90,'2026-12-29','REV','FULL-LENGTH MOCK TEST 1 (GATE ME pattern, all sections incl. GA) + detailed error analysis','',4.5,0,'m'],
+[91,'2026-12-30','REV','FULL-LENGTH MOCK TEST 2 (GATE ME pattern, all sections incl. GA) + weak-area rework — or final catch-up','',4.5,0,'m']
+];
+
+async function importGateSchedule(){
+  for(const [day,date,subjCode,topic,ga,mainHrs,gaHrs,kind] of SCHEDULE_91){
+    const subj = SCHED_SUBJ[subjCode]||subjCode;
+    const isTest = kind==='t'||kind==='m';
+    await idbPut('tasks',{
+      id:'gs-'+day, text:`Day ${day} · ${subj}: ${topic}`, category:'gate',
+      priority: isTest?'high':(kind==='b'?'low':'medium'),
+      date, done:false, projectId:null, createdAt:new Date().toISOString(),
+      estimatedMinutes:Math.round((mainHrs+gaHrs)*60), gaFocus:ga, gateKind:kind
+    });
+  }
+  await idbPut('meta',{key:'scheduleImported',value:true});
+}
+
+/* ---------- CALCULATIONS (kept separate from rendering) ---------- */
+function topicStats(t){
+  const subs=t.subtopics||[]; const n=subs.length||1;
+  const studied=subs.filter(s=>s.s).length, pyq=subs.filter(s=>s.p).length, revSum=subs.reduce((a,s)=>a+s.r,0);
+  const theory=Math.round(studied/n*100), pyqPct=Math.round(pyq/n*100), revision=Math.round(Math.min(1,revSum/(n*2))*100);
+  return {theory,pyqPct,revision,overall:Math.round((theory+pyqPct+revision)/3)};
+}
+function todayStr(d=new Date()){ const x=new Date(d); x.setMinutes(x.getMinutes()-x.getTimezoneOffset()); return x.toISOString().slice(0,10); }
+function addDays(dateStr,n){ const d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return todayStr(d); }
+function priorityRank(p){ return {urgent:0,high:1,medium:2,low:3}[p] ?? 2; }
+
+function getBacklog(tasks){ const t=todayStr(); return tasks.filter(x=>!x.done && x.date && x.date<t).sort((a,b)=>a.date<b.date?-1:1); }
+function getTodayTasks(tasks){ const t=todayStr(); return tasks.filter(x=>x.date===t); }
+function getUpcoming(tasks,days=7){ const t=todayStr(); const end=addDays(t,days); return tasks.filter(x=>!x.done && x.date>t && x.date<=end).sort((a,b)=>a.date<b.date?-1:1); }
+function pickFocus(tasks){
+  const today=getTodayTasks(tasks).filter(x=>!x.done);
+  const backlog=getBacklog(tasks);
+  const pool = today.length? today.map(t=>({t,reason:"Highest-priority incomplete task scheduled today."})) :
+               backlog.length? backlog.map(t=>({t,reason:"Overdue since "+t.date+" — nothing else is scheduled today."})) : [];
+  if(!pool.length) return null;
+  pool.sort((a,b)=>priorityRank(a.t.priority)-priorityRank(b.t.priority));
+  return pool[0];
+}
+function projStats(tasks,pid){ const ts=tasks.filter(t=>t.projectId===pid); const done=ts.filter(t=>t.done).length; return {total:ts.length,done,pct:ts.length?Math.round(done/ts.length*100):0}; }
+
+/* ---------- SHARED UI HELPERS ---------- */
+let CURRENT_ADD_DATE = todayStr();
+let CURRENT_ADD_PROJECT = null;
+function taskRowsHtml(list){
+  return list.length ? list.map(x=>`
+    <div class="task-row ${x.done?'done':''}">
+      <input type="checkbox" data-act="toggle" data-id="${x.id}" ${x.done?'checked':''}>
+      <span class="pri ${x.priority||'medium'}">${x.priority||'med'}</span>
+      <span class="txt">${esc(x.text)}</span>
+      <span class="cat">${esc(x.category||'')}${x.date&&x.date!==todayStr()?' · '+x.date:''}</span>
+      <button class="mini" data-act="push" data-id="${x.id}">Push</button>
+      <button class="mini" data-act="del" data-id="${x.id}">Remove</button>
+    </div>`).join('') : '<div class="empty">No tasks here yet.</div>';
+}
+function addFormHtml(){
+  return `<div class="addbar">
+    <select id="newCat"><option value="academic">Academic</option><option value="gate">GATE</option><option value="project">Project</option><option value="personal">Personal</option><option value="other">Other</option></select>
+    <select id="newPri"><option value="medium" selected>Medium</option><option value="urgent">Urgent</option><option value="high">High</option><option value="low">Low</option></select>
+    <input type="text" id="newTxt" placeholder="Add a task...">
+    <button class="primary" id="addTaskBtn">Add</button>
+  </div>`;
+}
+
+/* ---------- STATE / NAV ---------- */
+let VIEW='dashboard';
+let gateExpanded = new Set();
+let calMonth = new Date();
+let calSelected = todayStr();
+let openProjectId = null;
+let careerTab = 'internships';
+let openUniId = null;
+const INTERN_STATUSES = ['saved','applied','shortlisted','interview','offer','accepted','rejected','withdrawn','waiting'];
+const UNI_CHECKLIST = ['transcript','cv','sop','lor1','lor2','testScore','other'];
+const SKILL_CATS = ['Programming','CAD','Robotics','Embedded','Electronics','Mechanical','Manufacturing','Simulation','AI/ML','Computer Vision','Communication','Project Management','Other'];
+const RESUME_SECTIONS = ['Education','Projects','Internships','Skills','Achievements','Certifications','Competitions','Leadership','Publications'];
+let knowledgeTab = 'events';
+const EVENT_TYPES = ['Competition','Hackathon','Conference','Workshop','Presentation','Interview','Meeting','Exam','College Event','Deadline','Other'];
+const RESOURCE_TYPES = ['Course','Book','Video','Playlist','Paper','Documentation','Tutorial','Dataset','Website','Reference'];
+const RESOURCE_STATUSES = ['saved','started','in_progress','completed','revisit','archived'];
+const DOC_CATS = ['Academic','Resume','Internship','Projects','Certificates','Applications','Personal','Other'];
+let TIMER = {running:false, startedAt:null, elapsedBase:0};
+let showTimerLogForm = false;
+function timerElapsedSec(){ return Math.floor((TIMER.elapsedBase + (TIMER.running? Date.now()-TIMER.startedAt:0))/1000); }
+function fmtTime(sec){ const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return (h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
+setInterval(()=>{ const el=document.getElementById('timerDisplay'); if(el && TIMER.running) el.textContent=fmtTime(timerElapsedSec()); },1000);
+function setView(v){ VIEW=v; document.querySelectorAll('.navbtn,.bottomnav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v)); render(); }
+document.querySelectorAll('.navbtn,.bottomnav button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+
+const themeOrder=['system','dark','light'];
+let themeIdx = themeOrder.indexOf(localStorage.getItem('sos_theme')||'system'); if(themeIdx<0)themeIdx=0;
+function applyTheme(){
+  const t=themeOrder[themeIdx];
+  if(t==='system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('sos_theme',t);
+  document.getElementById('themeBtn').textContent = t==='system'?'Auto':(t==='dark'?'Dark':'Light');
+}
+document.getElementById('themeBtn').onclick=()=>{ themeIdx=(themeIdx+1)%themeOrder.length; applyTheme(); };
+applyTheme();
+
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- RENDER ---------- */
+async function render(){
+  const el = document.getElementById('view');
+  if(VIEW==='dashboard') el.innerHTML = await renderDashboard();
+  if(VIEW==='today') el.innerHTML = await renderToday();
+  if(VIEW==='gate') el.innerHTML = await renderGate();
+  if(VIEW==='projects') el.innerHTML = await renderProjects();
+  if(VIEW==='calendar') el.innerHTML = await renderCalendar();
+  if(VIEW==='career') el.innerHTML = await renderCareer();
+  if(VIEW==='knowledge') el.innerHTML = await renderKnowledge();
+  wireEvents();
+}
+
+async function renderDashboard(){
+  const tasks = await idbAll('tasks');
+  const gate = await idbAll('gateTopics');
+  const sessions = await idbAll('studySessions');
+  const t = todayStr();
+  const todayTasks = getTodayTasks(tasks);
+  const doneToday = todayTasks.filter(x=>x.done).length;
+  const backlog = getBacklog(tasks);
+  const upcoming = getUpcoming(tasks,7);
+  const focus = pickFocus(tasks);
+  const gateAvg = (()=>{ const me=gate.filter(x=>x.paper==='ME'); return me.length? Math.round(me.reduce((s,x)=>s+topicStats(x).overall,0)/me.length) : 0; })();
+  const studyMinToday = sessions.filter(s=>s.date===t).reduce((a,s)=>a+s.durationMin,0);
+  const studyLabel = studyMinToday>=60? Math.floor(studyMinToday/60)+'h '+(studyMinToday%60)+'m' : studyMinToday+'m';
+  const hr = new Date().getHours();
+  const greet = hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  const dateLabel = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+
+  let focusHtml = '<div class="focus-empty">Nothing scheduled or overdue — you\'re clear.</div>';
+  if(focus){
+    focusHtml = `<div class="focus-card">
+      <div class="tag">Focus now</div>
+      <h3>${esc(focus.t.text)}</h3>
+      <p>${esc(focus.t.category||'task')} · ${esc(focus.t.priority||'medium')} priority</p>
+      <button class="btn" data-act="complete-focus" data-id="${focus.t.id}">Mark complete</button>
+      <div class="why">${esc(focus.reason)}</div>
+    </div>`;
+  }
+
+  const upcomingHtml = upcoming.length ? upcoming.map(x=>`<div class="daychip"><span class="d">${x.date.slice(5)}</span><span class="n">${esc(x.text.slice(0,16))}</span></div>`).join('') : '<div class="empty">Nothing in the next 7 days.</div>';
+
+  return `
+  <h1>${greet}, Sidharth</h1>
+  <div class="date">${dateLabel}</div>
+  <div class="grid4">
+    <div class="card metric"><div class="n">${doneToday}/${todayTasks.length}</div><div class="l">Today's tasks</div></div>
+    <div class="card metric"><div class="n">${studyLabel}</div><div class="l">Study today</div></div>
+    <div class="card metric"><div class="n">${backlog.length}</div><div class="l">Overdue</div></div>
+    <div class="card metric"><div class="n">${gateAvg}%</div><div class="l">GATE progress</div></div>
+  </div>
+  <div class="section">${focusHtml}</div>
+  <div class="section"><h2>Upcoming</h2><div class="strip">${upcomingHtml}</div></div>
+  <div class="section"><h2>Needs attention</h2>
+    ${backlog.length? backlog.slice(0,5).map(x=>`<div class="task-row"><span class="pri ${x.priority||'medium'}">${x.priority||'med'}</span><span class="txt">${esc(x.text)}</span><span class="cat">since ${x.date}</span></div>`).join('') : '<div class="empty">Nothing overdue. Clear board.</div>'}
+  </div>
+  <div class="section"><h2>Data</h2><div class="card">
+    <div class="substat">Everything lives only in this browser's storage. Back it up regularly.</div>
+    <div class="addbar" style="margin-top:8px">
+      <button class="primary" data-act="export-data">Export backup (JSON)</button>
+      <label class="mini" style="cursor:pointer;display:inline-flex;align-items:center">Import backup<input type="file" id="importFile" accept="application/json" style="display:none"></label>
+    </div>
+  </div></div>`;
+}
+
+const ALL_STORES = ['tasks','gateTopics','meta','projects','mistakes','studySessions','pyqRecords','internships','universities','skills','resumeEntries','events','resources','documents','notes','achievements'];
+async function exportAllData(){
+  const data={};
+  for(const s of ALL_STORES) data[s]=await idbAll(s);
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='sidharth-os-backup-'+todayStr()+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+async function importAllData(file){
+  const text = await file.text();
+  let data; try{ data=JSON.parse(text); }catch(e){ alert('That file is not a valid backup.'); return; }
+  for(const s of ALL_STORES){ if(Array.isArray(data[s])){ for(const rec of data[s]) await idbPut(s,rec); } }
+}
+
+function timerCardHtml(){
+  const sec = timerElapsedSec();
+  const logForm = showTimerLogForm ? `<div class="addbar" style="margin-top:8px">
+    <select id="sessCat"><option value="gate">GATE</option><option value="academic">Academic</option><option value="project">Project</option><option value="personal">Personal</option><option value="other">Other</option></select>
+    <input type="text" id="sessWhat" placeholder="What did you study?">
+    <button class="primary" data-act="timer-save">Save session</button>
+    <button class="mini" data-act="timer-discard">Discard</button>
+  </div>` : '';
+  return `<div class="card section">
+    <h2 style="margin:0 0 8px">Focus timer</h2>
+    <div id="timerDisplay" style="font-size:2rem;font-weight:700;letter-spacing:.02em">${fmtTime(sec)}</div>
+    <div class="addbar" style="margin-top:8px">
+      ${!TIMER.running? `<button class="primary" data-act="timer-start">Start</button>` : `<button class="mini" data-act="timer-pause">Pause</button>`}
+      <button class="mini" data-act="timer-complete">Complete & log</button>
+      <button class="mini" data-act="timer-reset">Reset</button>
+    </div>
+    ${logForm}
+  </div>`;
+}
+
+async function renderToday(){
+  const tasks = await idbAll('tasks');
+  const today = getTodayTasks(tasks).sort((a,b)=>priorityRank(a.priority)-priorityRank(b.priority));
+  const backlog = getBacklog(tasks);
+  CURRENT_ADD_DATE = todayStr(); CURRENT_ADD_PROJECT = null;
+
+  const backlogRows = backlog.length ? backlog.map(x=>`
+    <div class="task-row">
+      <span class="pri ${x.priority||'medium'}">${x.priority||'med'}</span>
+      <span class="txt">${esc(x.text)} <span class="cat">(was ${x.date})</span></span>
+      <button class="mini" data-act="movetoday" data-id="${x.id}">Move to today</button>
+    </div>`).join('') : '<div class="empty">Nothing pending.</div>';
+
+  return `
+  <h1>Today</h1>
+  <div class="date">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long'})}</div>
+  ${timerCardHtml()}
+  <div class="card section">
+    ${taskRowsHtml(today)}
+    ${addFormHtml()}
+  </div>
+  <div class="section"><h2>Backlog</h2><div class="card">${backlogRows}</div></div>`;
+}
+
+function revClass(r){ return r<=0?'':r===1?'r1':'r2plus'; }
+
+async function renderGate(){
+  await ensureGateSeeded();
+  await ensurePaperSeeded(gatePaper);
+  const allTopics = await idbAll('gateTopics');
+  const topics = allTopics.filter(t=>t.paper===gatePaper);
+  const scheduleImported = await idbGet('meta','scheduleImported');
+  const bySubject = {};
+  topics.forEach(t=>{ (bySubject[t.subject]=bySubject[t.subject]||[]).push(t); });
+  const overallAvg = topics.length? Math.round(topics.reduce((s,x)=>s+topicStats(x).overall,0)/topics.length):0;
+
+  const tabs = `<div class="papertabs">${['ME','RA','GA'].map(p=>`<button class="papertab ${p===gatePaper?'active':''}" data-act="switch-paper" data-paper="${p}">${p}</button>`).join('')}</div>`;
+
+  let scheduleBlock = '';
+  if(gatePaper==='ME'){
+    if(!scheduleImported){
+      scheduleBlock = `<div class="card" style="margin-bottom:18px">
+        <h3 style="margin:0 0 4px">91-day schedule not imported yet</h3>
+        <div class="cat">Your Prep Tracker workbook (1 Oct – 30 Dec 2026, sectional tests, buffer days) hasn't been loaded into Today/Calendar yet.</div>
+        <button class="primary" style="margin-top:10px" data-act="import-schedule">Import 91-Day Schedule</button>
+      </div>`;
+    } else {
+      const allTasks = await idbAll('tasks');
+      const schedTasks = allTasks.filter(t=>t.id&&t.id.startsWith('gs-'));
+      const doneCount = schedTasks.filter(t=>t.done).length;
+      scheduleBlock = `<div class="card" style="margin-bottom:18px">
+        <div class="substat">Schedule imported: ${doneCount}/${schedTasks.length} days complete. Days appear in Today and Calendar — mark them done as you study.</div>
+      </div>`;
+    }
+  }
+
+  let html = `<h1>GATE 2027 — ${gatePaper}</h1>${tabs}<div class="date">Overall syllabus progress: ${overallAvg}% · click a topic to open its subtopics</div>`;
+  html += scheduleBlock;
+  for(const subject in bySubject){
+    const ts = bySubject[subject];
+    const avg = Math.round(ts.reduce((s,x)=>s+topicStats(x).overall,0)/ts.length);
+    html += `<div class="subject">
+      <div class="subject-head"><h3>${esc(subject)}</h3><span class="pct">${avg}%</span></div>
+      <div class="bar"><div style="width:${avg}%"></div></div>
+      ${ts.map(t=>{
+        const st=topicStats(t); const open=gateExpanded.has(t.id);
+        return `<div class="topic">
+          <div class="topic-top" data-act="toggle-topic" data-id="${t.id}">
+            <span class="tname">${open?'▾':'▸'} ${esc(t.topic)}</span>
+            <span class="overall-pill">${st.overall}%</span>
+          </div>
+          <div class="substat">Theory ${st.theory}% · PYQs ${st.pyqPct}% · Revision ${st.revision}%</div>
+          ${open?`<div class="subtopics">
+            ${t.subtopics.map((s,i)=>`
+              <div class="subrow">
+                <span class="sname">${esc(s.n)}</span>
+                <label><input type="checkbox" data-act="sub-toggle" data-kind="s" data-id="${t.id}" data-si="${i}" ${s.s?'checked':''}> Studied</label>
+                <label><input type="checkbox" data-act="sub-toggle" data-kind="p" data-id="${t.id}" data-si="${i}" ${s.p?'checked':''}> PYQ done</label>
+                <button class="revbtn ${revClass(s.r)}" data-act="sub-rev" data-id="${t.id}" data-si="${i}">Rev ×${s.r}</button>
+              </div>`).join('')}
+            <label class="notes-label">Notes for ${esc(t.topic)}</label>
+            <textarea class="notesbox" data-act="topic-notes" data-id="${t.id}" placeholder="Formulas, tricky points, doubts...">${esc(t.notes||'')}</textarea>
+          </div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  html += renderRevisionQueue(topics);
+  html += await renderPyqAnalytics(topics);
+  html += await renderMistakeLog();
+  return html;
+}
+
+function renderRevisionQueue(topics){
+  const due=[];
+  topics.forEach(t=>t.subtopics.forEach((s,i)=>{ if(s.s && s.r<2) due.push({t,s,i}); }));
+  due.sort((a,b)=>a.s.r-b.s.r);
+  const rows = due.slice(0,10).map(d=>`<div class="subrow">
+    <span class="sname">${esc(d.t.topic)} — ${esc(d.s.n)} <span class="cat">(${esc(d.t.subject)})</span></span>
+    <button class="revbtn ${revClass(d.s.r)}" data-act="sub-rev" data-id="${d.t.id}" data-si="${d.i}">Rev ×${d.s.r}</button>
+  </div>`).join('');
+  return `<div class="section"><h2>Revision due (${due.length})</h2><div class="card">${due.length?rows:'<div class="empty">Nothing studied yet needs revision.</div>'}</div></div>`;
+}
+
+async function renderPyqAnalytics(topics){
+  const all = await idbAll('pyqRecords');
+  const records = all.filter(r=>r.paper===gatePaper);
+  const totalAtt = records.reduce((a,r)=>a+r.attempted,0), totalCorr = records.reduce((a,r)=>a+r.correct,0);
+  const accuracy = totalAtt? Math.round(totalCorr/totalAtt*100):0;
+  const bySubj={};
+  records.forEach(r=>{ (bySubj[r.subject]=bySubj[r.subject]||{att:0,corr:0}); bySubj[r.subject].att+=r.attempted; bySubj[r.subject].corr+=r.correct; });
+  const subjRows = Object.keys(bySubj).map(s=>{ const d=bySubj[s]; const pct=d.att?Math.round(d.corr/d.att*100):0; return {s,pct,att:d.att}; }).sort((a,b)=>a.pct-b.pct);
+  const subjOpts = Object.keys(SYLLABI[gatePaper]).map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+
+  return `<div class="section"><h2>PYQ accuracy — ${gatePaper}</h2>
+    <div class="card">
+      <div class="grid4" style="margin-bottom:0">
+        <div class="metric"><div class="n">${totalAtt}</div><div class="l">Attempted</div></div>
+        <div class="metric"><div class="n">${accuracy}%</div><div class="l">Accuracy</div></div>
+      </div>
+      ${subjRows.length?subjRows.map(r=>`<div class="substat" style="margin-top:8px">${esc(r.s)}: ${r.pct}% (${r.att} attempted)${r.pct<60?' — needs work':''}</div>`).join(''):'<div class="empty" style="margin-top:8px">No PYQ sessions logged yet for this paper.</div>'}
+      <div class="addbar" style="margin-top:12px">
+        <select id="pySubj">${subjOpts}</select>
+        <input type="text" id="pyTopic" placeholder="Topic">
+        <input type="number" id="pyYear" placeholder="Year" style="width:70px">
+      </div>
+      <div class="addbar">
+        <input type="number" id="pyAtt" placeholder="Attempted" style="width:90px">
+        <input type="number" id="pyCorr" placeholder="Correct" style="width:90px">
+        <button class="primary" id="pyAddBtn">Log PYQ set</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function renderMistakeLog(){
+  const all = await idbAll('mistakes');
+  const mistakes = all.filter(m=>(m.paper||'ME')===gatePaper);
+  mistakes.sort((a,b)=> (a.resolved-b.resolved) || (b.date>a.date?1:-1) );
+  const types = ['concept gap','formula forgotten','calculation','sign error','misread','time pressure','guess','carelessness','other'];
+  const subjOpts = Object.keys(SYLLABI[gatePaper]).map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  const open = mistakes.filter(m=>!m.resolved), resolved = mistakes.filter(m=>m.resolved);
+  const row = m=>`<div class="topic">
+    <div class="topic-top">
+      <span class="tname">${esc(m.topic||m.subject)} <span class="cat">(${esc(m.mtype)})</span></span>
+      <label style="font-size:.68rem;color:var(--muted)"><input type="checkbox" data-act="mistake-resolve" data-id="${m.id}" ${m.resolved?'checked':''}> Resolved</label>
+    </div>
+    <div class="substat">${esc(m.what)}</div>
+    ${m.correct?`<div class="substat">Fix: ${esc(m.correct)}</div>`:''}
+    <button class="mini" data-act="mistake-del" data-id="${m.id}" style="margin-top:6px">Remove</button>
+  </div>`;
+
+  return `<div class="section"><h2>Mistake log — ${open.length} open</h2>
+    <div class="card">
+      ${open.length?open.map(row).join(''):'<div class="empty">No open mistakes logged.</div>'}
+      ${resolved.length?`<div class="notes-label">Resolved (${resolved.length})</div>${resolved.map(row).join('')}`:''}
+      <div class="addbar" style="margin-top:12px">
+        <select id="mSubj">${subjOpts}</select>
+        <select id="mType">${types.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
+        <input type="text" id="mTopic" placeholder="Topic (e.g. Mohr's circle)">
+      </div>
+      <div class="addbar">
+        <input type="text" id="mWhat" placeholder="What went wrong">
+        <input type="text" id="mCorrect" placeholder="Correct approach (optional)">
+        <button class="primary" id="mAddBtn">Log mistake</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function renderCareer(){
+  const tabs=['internships','highered','skills','resume'];
+  const labels={internships:'Internships',highered:'Higher Studies',skills:'Skills',resume:'Resume'};
+  const tabHtml = `<div class="papertabs">${tabs.map(t=>`<button class="papertab ${t===careerTab?'active':''}" data-act="switch-career" data-tab="${t}">${labels[t]}</button>`).join('')}</div>`;
+  let body='';
+  if(careerTab==='internships') body = await renderInternships();
+  if(careerTab==='highered') body = await renderHigherEd();
+  if(careerTab==='skills') body = await renderSkills();
+  if(careerTab==='resume') body = await renderResume();
+  return `<h1>Career</h1>${tabHtml}${body}`;
+}
+
+async function renderInternships(){
+  const items = await idbAll('internships');
+  items.sort((a,b)=>INTERN_STATUSES.indexOf(a.status)-INTERN_STATUSES.indexOf(b.status));
+  const counts={}; INTERN_STATUSES.forEach(o=>counts[o]=items.filter(i=>i.status===o).length);
+  const pipeline = INTERN_STATUSES.filter(o=>counts[o]).map(o=>`${o} ${counts[o]}`).join(' · ')||'Nothing tracked yet.';
+  const rows = items.map(i=>`<div class="topic">
+    <div class="topic-top">
+      <span class="tname">${esc(i.company)}${i.role?' — '+esc(i.role):''}</span>
+      <select data-act="intern-status" data-id="${i.id}">${INTERN_STATUSES.map(o=>`<option value="${o}" ${i.status===o?'selected':''}>${o}</option>`).join('')}</select>
+    </div>
+    <div class="substat">${esc(i.type||'')}${i.location?' · '+esc(i.location):''}${i.startDate?' · starts '+i.startDate:''}</div>
+    <button class="mini" data-act="intern-del" data-id="${i.id}" style="margin-top:6px">Remove</button>
+  </div>`).join('');
+  return `<div class="date">${pipeline}</div>
+  <div class="section">${items.length?rows:'<div class="empty">No internships tracked yet. Add one below.</div>'}</div>
+  <div class="card">
+    <div class="addbar">
+      <input type="text" id="inCompany" placeholder="Company">
+      <input type="text" id="inRole" placeholder="Role">
+      <select id="inStatus">${INTERN_STATUSES.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>
+    </div>
+    <div class="addbar">
+      <input type="text" id="inType" placeholder="Type (remote/onsite/hybrid)">
+      <input type="text" id="inLocation" placeholder="Location">
+      <input type="date" id="inStart">
+      <button class="primary" id="inAddBtn">Add</button>
+    </div>
+  </div>`;
+}
+
+async function renderHigherEd(){
+  const unis = await idbAll('universities');
+  const rows = unis.map(u=>{
+    const cl = u.checklist||{};
+    const done = UNI_CHECKLIST.filter(k=>cl[k]).length;
+    const pct = Math.round(done/UNI_CHECKLIST.length*100);
+    const open = openUniId===u.id;
+    return `<div class="topic">
+      <div class="topic-top" data-act="toggle-uni" data-id="${u.id}">
+        <span class="tname">${open?'▾':'▸'} ${esc(u.name)} <span class="cat">(${esc(u.country||'')})</span></span>
+        <span class="overall-pill">${pct}%</span>
+      </div>
+      <div class="substat">${esc(u.program||'')}${u.deadline?' · deadline '+u.deadline:''}</div>
+      ${open?`<div class="subtopics">
+        ${UNI_CHECKLIST.map(k=>`<label style="display:inline-flex;align-items:center;gap:4px;margin:4px 10px 4px 0;font-size:.72rem;color:var(--muted)"><input type="checkbox" data-act="uni-check" data-id="${u.id}" data-key="${k}" ${cl[k]?'checked':''}> ${k}</label>`).join('')}
+        <button class="mini" data-act="uni-del" data-id="${u.id}" style="margin-top:8px;color:var(--danger);border-color:var(--danger)">Delete</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+  return `<div class="section">${unis.length?rows:'<div class="empty">No universities tracked yet.</div>'}</div>
+  <div class="card">
+    <div class="addbar">
+      <input type="text" id="uName" placeholder="University">
+      <input type="text" id="uCountry" placeholder="Country">
+      <input type="text" id="uProgram" placeholder="Program/Degree">
+      <input type="date" id="uDeadline">
+      <button class="primary" id="uAddBtn">Add</button>
+    </div>
+  </div>`;
+}
+
+async function renderSkills(){
+  const skills = await idbAll('skills');
+  skills.sort((a,b)=>b.level-a.level);
+  const rows = skills.map(s=>`<div class="subrow">
+    <span class="sname">${esc(s.name)} <span class="cat">(${esc(s.category)})</span>${s.evidence?' — '+esc(s.evidence):''}</span>
+    <select data-act="skill-level" data-id="${s.id}">${[1,2,3,4,5].map(n=>`<option value="${n}" ${s.level===n?'selected':''}>${n}</option>`).join('')}</select>
+    <button class="mini" data-act="skill-del" data-id="${s.id}">Remove</button>
+  </div>`).join('');
+  const catOpts = SKILL_CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
+  return `<div class="card">${skills.length?rows:'<div class="empty">No skills logged yet.</div>'}</div>
+  <div class="card" style="margin-top:10px">
+    <div class="addbar">
+      <input type="text" id="skName" placeholder="Skill">
+      <select id="skCat">${catOpts}</select>
+      <input type="text" id="skEvidence" placeholder="Evidence (project/internship)">
+      <button class="primary" id="skAddBtn">Add</button>
+    </div>
+  </div>`;
+}
+
+async function renderResume(){
+  const entries = await idbAll('resumeEntries');
+  const bySec={}; entries.forEach(e=>{(bySec[e.section]=bySec[e.section]||[]).push(e);});
+  let html='';
+  RESUME_SECTIONS.forEach(sec=>{
+    const list = bySec[sec]||[];
+    if(!list.length) return;
+    html += `<div class="subject"><div class="subject-head"><h3>${sec}</h3></div>${list.map(e=>`<div class="subrow"><span class="sname">${esc(e.title)}${e.organization?' — '+esc(e.organization):''} ${e.date?'<span class="cat">('+esc(e.date)+')</span>':''}${e.description?'<br><span class="cat">'+esc(e.description)+'</span>':''}</span><button class="mini" data-act="resume-del" data-id="${e.id}">Remove</button></div>`).join('')}</div>`;
+  });
+  if(!entries.length) html = '<div class="empty">No resume entries yet.</div>';
+  const secOpts = RESUME_SECTIONS.map(s=>`<option value="${s}">${s}</option>`).join('');
+  return `${html}<div class="card" style="margin-top:10px">
+    <div class="addbar">
+      <select id="rSec">${secOpts}</select>
+      <input type="text" id="rTitle" placeholder="Title">
+      <input type="text" id="rOrg" placeholder="Organization (optional)">
+      <input type="text" id="rDate" placeholder="Date (e.g. 2026)">
+    </div>
+    <div class="addbar">
+      <input type="text" id="rDesc" placeholder="Description / highlight">
+      <button class="primary" id="rAddBtn">Add</button>
+    </div>
+  </div>`;
+}
+
+async function renderKnowledge(){
+  const tabs=['events','learning','documents','notes','achievements'];
+  const labels={events:'Events',learning:'Learning',documents:'Documents',notes:'Notes',achievements:'Achievements'};
+  const tabHtml = `<div class="papertabs">${tabs.map(t=>`<button class="papertab ${t===knowledgeTab?'active':''}" data-act="switch-knowledge" data-tab="${t}">${labels[t]}</button>`).join('')}</div>`;
+  let body='';
+  if(knowledgeTab==='events') body = await renderEvents();
+  if(knowledgeTab==='learning') body = await renderLearning();
+  if(knowledgeTab==='documents') body = await renderDocuments();
+  if(knowledgeTab==='notes') body = await renderNotes();
+  if(knowledgeTab==='achievements') body = await renderAchievements();
+  return `<h1>Knowledge</h1>${tabHtml}${body}`;
+}
+
+async function renderEvents(){
+  const events = await idbAll('events');
+  events.sort((a,b)=>(a.date||'')<(b.date||'')?-1:1);
+  const rows = events.map(e=>`<div class="topic">
+    <div class="topic-top">
+      <span class="tname">${esc(e.title)} <span class="cat">(${esc(e.etype)})</span></span>
+      <span class="overall-pill">${esc(e.date||'')}</span>
+    </div>
+    ${e.location?`<div class="substat">${esc(e.location)}</div>`:''}
+    <button class="mini" data-act="event-del" data-id="${e.id}" style="margin-top:6px">Remove</button>
+  </div>`).join('');
+  const typeOpts = EVENT_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
+  return `<div class="section">${events.length?rows:'<div class="empty">No events yet.</div>'}</div>
+  <div class="card">
+    <div class="addbar">
+      <input type="text" id="evTitle" placeholder="Event title">
+      <select id="evType">${typeOpts}</select>
+      <input type="date" id="evDate">
+    </div>
+    <div class="addbar">
+      <input type="text" id="evLocation" placeholder="Location (optional)">
+      <button class="primary" id="evAddBtn">Add</button>
+    </div>
+  </div>`;
+}
+
+async function renderLearning(){
+  const resources = await idbAll('resources');
+  const rows = resources.map(r=>`<div class="subrow">
+    <span class="sname">${esc(r.title)} <span class="cat">(${esc(r.rtype)})</span>${r.url?` — <a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:var(--primary)">Open link</a>`:''}</span>
+    <select data-act="res-status" data-id="${r.id}">${RESOURCE_STATUSES.map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s}</option>`).join('')}</select>
+    <button class="mini" data-act="res-del" data-id="${r.id}">Remove</button>
+  </div>`).join('');
+  const typeOpts = RESOURCE_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
+  return `<div class="card">${resources.length?rows:'<div class="empty">No learning resources saved yet.</div>'}</div>
+  <div class="card" style="margin-top:10px">
+    <div class="addbar">
+      <input type="text" id="resTitle" placeholder="Title">
+      <select id="resType">${typeOpts}</select>
+      <input type="text" id="resUrl" placeholder="Link (optional)">
+      <button class="primary" id="resAddBtn">Add</button>
+    </div>
+  </div>`;
+}
+
+async function renderDocuments(){
+  const docs = await idbAll('documents');
+  const rows = docs.map(d=>`<div class="subrow">
+    <span class="sname">${esc(d.name)} <span class="cat">(${esc(d.category)})</span>${d.url?` — <a href="${esc(d.url)}" target="_blank" rel="noopener" style="color:var(--primary)">Open link</a>`:''}</span>
+    <button class="mini" data-act="doc-del" data-id="${d.id}">Remove</button>
+  </div>`).join('');
+  const catOpts = DOC_CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
+  return `<div class="card">${docs.length?rows:'<div class="empty">No documents indexed yet.</div>'}</div>
+  <div class="card" style="margin-top:10px">
+    <div class="addbar">
+      <input type="text" id="docName" placeholder="Document name">
+      <select id="docCat">${catOpts}</select>
+      <input type="text" id="docUrl" placeholder="Link (optional)">
+      <button class="primary" id="docAddBtn">Add</button>
+    </div>
+  </div>`;
+}
+
+async function renderNotes(){
+  const notes = await idbAll('notes');
+  notes.sort((a,b)=>(b.updatedAt||'')>(a.updatedAt||'')?1:-1);
+  const rows = notes.map(n=>`<div class="topic">
+    <div class="topic-top">
+      <span class="tname">${esc(n.title)}</span>
+      <button class="mini" data-act="note-del" data-id="${n.id}">Remove</button>
+    </div>
+    <div class="substat">${esc((n.content||'').slice(0,140))}${(n.content||'').length>140?'...':''}</div>
+  </div>`).join('');
+  return `<div class="section">${notes.length?rows:'<div class="empty">No notes yet.</div>'}</div>
+  <div class="card">
+    <div class="addbar"><input type="text" id="noteTitle" placeholder="Note title"></div>
+    <div class="addbar"><textarea class="notesbox" id="noteContent" placeholder="Write your note..."></textarea></div>
+    <div class="addbar"><button class="primary" id="noteAddBtn">Save note</button></div>
+  </div>`;
+}
+
+const ACH_TYPES = ['Competition','Certification','Internship','Project','Presentation','Publication','Academic','Award','Other'];
+
+async function renderAchievements(){
+  const achievements = await idbAll('achievements');
+  const projects = await idbAll('projects');
+  const timeline = [
+    ...achievements.map(a=>({date:a.date,label:`${a.title}${a.organization?' — '+a.organization:''}`,tag:a.atype})),
+    ...projects.flatMap(p=>(p.changelog||[]).map(c=>({date:c.date,label:`${p.name}: ${c.title}`,tag:'Project'})))
+  ].filter(x=>x.date).sort((a,b)=>b.date<a.date?-1:1);
+
+  const timelineHtml = timeline.length ? timeline.slice(0,15).map(x=>`<div class="subrow"><span class="sname">${esc(x.date)} — ${esc(x.label)} <span class="cat">(${esc(x.tag)})</span></span></div>`).join('') : '<div class="empty">Nothing dated yet — log an achievement or a project changelog entry.</div>';
+
+  const rows = achievements.map(a=>`<div class="topic">
+    <div class="topic-top">
+      <span class="tname">${esc(a.title)} <span class="cat">(${esc(a.atype)})</span></span>
+      <span class="overall-pill">${esc(a.date||'')}</span>
+    </div>
+    ${a.organization?`<div class="substat">${esc(a.organization)}</div>`:''}
+    ${a.description?`<div class="substat">${esc(a.description)}</div>`:''}
+    <button class="mini" data-act="ach-del" data-id="${a.id}" style="margin-top:6px">Remove</button>
+  </div>`).join('');
+  const typeOpts = ACH_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
+
+  return `<div class="section"><h2>Timeline</h2><div class="card">${timelineHtml}</div></div>
+  <div class="section"><h2>Achievements</h2>
+    <div class="section">${achievements.length?rows:'<div class="empty">No achievements logged yet.</div>'}</div>
+    <div class="card">
+      <div class="addbar">
+        <input type="text" id="achTitle" placeholder="Title">
+        <select id="achType">${typeOpts}</select>
+        <input type="date" id="achDate">
+      </div>
+      <div class="addbar">
+        <input type="text" id="achOrg" placeholder="Organization (optional)">
+        <input type="text" id="achDesc" placeholder="Description (optional)">
+        <button class="primary" id="achAddBtn">Add</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function renderProjects(){
+  const projects = await idbAll('projects');
+  const tasks = await idbAll('tasks');
+  const order=['active','planned','idea','paused','completed','archived'];
+  projects.sort((a,b)=>order.indexOf(a.status)-order.indexOf(b.status));
+
+  let html = `<h1>Projects</h1><div class="date">${projects.length} project${projects.length===1?'':'s'}</div>`;
+  html += projects.length ? projects.map(p=>{
+    const st = projStats(tasks,p.id); const open = openProjectId===p.id;
+    const ptasks = tasks.filter(t=>t.projectId===p.id);
+    if(open){ CURRENT_ADD_DATE = todayStr(); CURRENT_ADD_PROJECT = p.id; }
+    return `<div class="topic">
+      <div class="topic-top" data-act="toggle-proj" data-id="${p.id}">
+        <span class="tname">${open?'▾':'▸'} ${esc(p.name)} <span class="cat">(${p.status})</span></span>
+        <span class="overall-pill">${st.pct}%</span>
+      </div>
+      ${p.description?`<div class="cat" style="margin-top:4px">${esc(p.description)}</div>`:''}
+      <div class="bar" style="margin-top:8px"><div style="width:${st.pct}%"></div></div>
+      <div class="substat">${st.done}/${st.total} linked tasks done${p.targetDate?' · target '+p.targetDate:''}</div>
+      ${open?`<div class="subtopics">
+        ${taskRowsHtml(ptasks)}
+        ${addFormHtml()}
+        <label class="notes-label">Changelog</label>
+        ${(p.changelog&&p.changelog.length) ? p.changelog.slice().reverse().map(c=>`<div class="subrow"><span class="sname">${esc(c.date)} — ${esc(c.title)}${c.desc?' · '+esc(c.desc):''}</span></div>`).join('') : '<div class="empty">No changelog entries yet.</div>'}
+        <div class="addbar">
+          <input type="text" id="clTitle" placeholder="What changed?">
+          <input type="text" id="clDesc" placeholder="Details (optional)">
+          <button class="mini" data-act="add-changelog" data-id="${p.id}">Log update</button>
+        </div>
+        <button class="mini" data-act="del-proj" data-id="${p.id}" style="margin-top:8px;color:var(--danger);border-color:var(--danger)">Delete project</button>
+      </div>`:''}
+    </div>`;
+  }).join('') : '<div class="empty">No active projects yet. Create one below.</div>';
+
+  html += `<div class="section"><h2>New project</h2><div class="card"><div class="addbar">
+    <input type="text" id="newProjName" placeholder="Project name">
+    <select id="newProjStatus"><option value="idea">Idea</option><option value="planned">Planned</option><option value="active" selected>Active</option></select>
+    <input type="date" id="newProjTarget">
+    <button class="primary" id="addProjBtn">Create</button>
+  </div></div></div>`;
+  return html;
+}
+
+async function renderCalendar(){
+  const tasks = await idbAll('tasks');
+  const year=calMonth.getFullYear(), month=calMonth.getMonth();
+  const startDow = new Date(year,month,1).getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  const monthLabel = calMonth.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  const pendingDates = new Set(tasks.filter(t=>!t.done).map(t=>t.date));
+
+  let cells='';
+  for(let i=0;i<startDow;i++) cells+='<div class="calcell other"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = todayStr(new Date(year,month,d));
+    cells+=`<div class="calcell ${ds===todayStr()?'today':''} ${ds===calSelected?'sel':''}" data-act="pick-day" data-date="${ds}">${d}${pendingDates.has(ds)?'<span class="dot"></span>':''}</div>`;
+  }
+  CURRENT_ADD_DATE = calSelected; CURRENT_ADD_PROJECT = null;
+  const dayTasks = tasks.filter(t=>t.date===calSelected);
+
+  return `
+  <h1>Calendar</h1>
+  <div class="calnav">
+    <button class="mini" data-act="cal-prev">Prev</button>
+    <div class="date" style="margin:0">${monthLabel}</div>
+    <button class="mini" data-act="cal-next">Next</button>
+  </div>
+  <div class="calgrid">${cells}</div>
+  <div class="section" style="margin-top:16px"><h2>${calSelected}${calSelected===todayStr()?' · today':''}</h2>
+    <div class="card">${taskRowsHtml(dayTasks)}${addFormHtml()}</div>
+  </div>`;
+}
+
+/* ---------- EVENTS ---------- */
+function wireEvents(){
+  document.querySelectorAll('[data-act="toggle"]').forEach(el=>el.onchange=async e=>{
+    const task = await idbGet('tasks',el.dataset.id); task.done=el.checked; task.completedAt = el.checked?new Date().toISOString():null; await idbPut('tasks',task); render();
+  });
+  document.querySelectorAll('[data-act="del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('tasks',el.dataset.id); render(); });
+  document.querySelectorAll('[data-act="push"]').forEach(el=>el.onclick=async ()=>{ const task=await idbGet('tasks',el.dataset.id); task.date=addDays(task.date,1); await idbPut('tasks',task); render(); });
+  document.querySelectorAll('[data-act="movetoday"]').forEach(el=>el.onclick=async ()=>{ const task=await idbGet('tasks',el.dataset.id); task.date=todayStr(); await idbPut('tasks',task); render(); });
+  document.querySelectorAll('[data-act="complete-focus"]').forEach(el=>el.onclick=async ()=>{ const task=await idbGet('tasks',el.dataset.id); task.done=true; task.completedAt=new Date().toISOString(); await idbPut('tasks',task); render(); });
+  document.querySelectorAll('[data-act="toggle-topic"]').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.id; gateExpanded.has(id)?gateExpanded.delete(id):gateExpanded.add(id); render();
+  });
+  document.querySelectorAll('[data-act="sub-toggle"]').forEach(el=>el.onchange=async ()=>{
+    const t = await idbGet('gateTopics',el.dataset.id); t.subtopics[+el.dataset.si][el.dataset.kind]=el.checked; await idbPut('gateTopics',t); render();
+  });
+  document.querySelectorAll('[data-act="sub-rev"]').forEach(el=>el.onclick=async ()=>{
+    const t = await idbGet('gateTopics',el.dataset.id); const s=t.subtopics[+el.dataset.si]; s.r=(s.r+1)%4; await idbPut('gateTopics',t); render();
+  });
+  document.querySelectorAll('[data-act="topic-notes"]').forEach(el=>el.onblur=async ()=>{
+    const t = await idbGet('gateTopics',el.dataset.id); t.notes=el.value; await idbPut('gateTopics',t);
+  });
+  const importBtn = document.querySelector('[data-act="import-schedule"]');
+  if(importBtn) importBtn.onclick = async ()=>{ importBtn.disabled=true; importBtn.textContent='Importing...'; await importGateSchedule(); render(); };
+  document.querySelectorAll('[data-act="switch-paper"]').forEach(el=>el.onclick=()=>{ gatePaper=el.dataset.paper; gateExpanded=new Set(); render(); });
+  const pyAddBtn = document.getElementById('pyAddBtn');
+  if(pyAddBtn) pyAddBtn.onclick = async ()=>{
+    const att=parseInt(document.getElementById('pyAtt').value,10), corr=parseInt(document.getElementById('pyCorr').value,10);
+    if(!att || isNaN(corr)) return;
+    await idbPut('pyqRecords',{id:'py'+Date.now(),paper:gatePaper,subject:document.getElementById('pySubj').value,topic:document.getElementById('pyTopic').value.trim(),year:document.getElementById('pyYear').value.trim(),attempted:att,correct:Math.min(corr,att),date:todayStr()});
+    render();
+  };
+  document.querySelectorAll('[data-act="mistake-resolve"]').forEach(el=>el.onchange=async ()=>{
+    const m = await idbGet('mistakes',el.dataset.id); m.resolved=el.checked; await idbPut('mistakes',m); render();
+  });
+  document.querySelectorAll('[data-act="mistake-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('mistakes',el.dataset.id); render(); });
+  const mAddBtn = document.getElementById('mAddBtn');
+  if(mAddBtn) mAddBtn.onclick = async ()=>{
+    const what=document.getElementById('mWhat').value.trim(); if(!what) return;
+    await idbPut('mistakes',{id:'m'+Date.now()+Math.random().toString(36).slice(2,6),paper:gatePaper,subject:document.getElementById('mSubj').value,topic:document.getElementById('mTopic').value.trim(),mtype:document.getElementById('mType').value,what,correct:document.getElementById('mCorrect').value.trim(),date:todayStr(),resolved:false});
+    render();
+  };
+  document.querySelectorAll('[data-act="toggle-proj"]').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.id; openProjectId = (openProjectId===id)?null:id; render();
+  });
+  document.querySelectorAll('[data-act="del-proj"]').forEach(el=>el.onclick=async ()=>{
+    const tasks = await idbAll('tasks');
+    for(const t of tasks){ if(t.projectId===el.dataset.id){ t.projectId=null; await idbPut('tasks',t); } }
+    await idbDel('projects',el.dataset.id); render();
+  });
+  const addProjBtn = document.getElementById('addProjBtn');
+  if(addProjBtn) addProjBtn.onclick = async ()=>{
+    const name = document.getElementById('newProjName').value.trim(); if(!name) return;
+    await idbPut('projects',{id:'p'+Date.now()+Math.random().toString(36).slice(2,6),name,status:document.getElementById('newProjStatus').value,targetDate:document.getElementById('newProjTarget').value||null,description:'',changelog:[],createdAt:new Date().toISOString()});
+    render();
+  };
+  document.querySelectorAll('[data-act="add-changelog"]').forEach(el=>el.onclick=async ()=>{
+    const title=document.getElementById('clTitle').value.trim(); if(!title) return;
+    const p = await idbGet('projects',el.dataset.id); p.changelog=p.changelog||[];
+    p.changelog.push({date:todayStr(),title,desc:document.getElementById('clDesc').value.trim()});
+    await idbPut('projects',p); render();
+  });
+  const tStart=document.querySelector('[data-act="timer-start"]'); if(tStart) tStart.onclick=()=>{ TIMER.running=true; TIMER.startedAt=Date.now(); render(); };
+  const tPause=document.querySelector('[data-act="timer-pause"]'); if(tPause) tPause.onclick=()=>{ TIMER.elapsedBase+=Date.now()-TIMER.startedAt; TIMER.running=false; render(); };
+  const tComplete=document.querySelector('[data-act="timer-complete"]'); if(tComplete) tComplete.onclick=()=>{ if(TIMER.running){TIMER.elapsedBase+=Date.now()-TIMER.startedAt; TIMER.running=false;} showTimerLogForm=true; render(); };
+  const tReset=document.querySelector('[data-act="timer-reset"]'); if(tReset) tReset.onclick=()=>{ TIMER={running:false,startedAt:null,elapsedBase:0}; showTimerLogForm=false; render(); };
+  const tDiscard=document.querySelector('[data-act="timer-discard"]'); if(tDiscard) tDiscard.onclick=()=>{ showTimerLogForm=false; render(); };
+  const tSave=document.querySelector('[data-act="timer-save"]'); if(tSave) tSave.onclick=async ()=>{
+    const durationMin = Math.max(1,Math.round(timerElapsedSec()/60));
+    await idbPut('studySessions',{id:'ss'+Date.now(),date:todayStr(),category:document.getElementById('sessCat').value,what:document.getElementById('sessWhat').value.trim(),durationMin,createdAt:new Date().toISOString()});
+    TIMER={running:false,startedAt:null,elapsedBase:0}; showTimerLogForm=false; render();
+  };
+  document.querySelectorAll('[data-act="pick-day"]').forEach(el=>el.onclick=()=>{ calSelected=el.dataset.date; render(); });
+  const calPrev = document.querySelector('[data-act="cal-prev"]'); if(calPrev) calPrev.onclick=()=>{ calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1); render(); };
+  const calNext = document.querySelector('[data-act="cal-next"]'); if(calNext) calNext.onclick=()=>{ calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1); render(); };
+
+  /* -- Career -- */
+  document.querySelectorAll('[data-act="switch-career"]').forEach(el=>el.onclick=()=>{ careerTab=el.dataset.tab; render(); });
+  document.querySelectorAll('[data-act="intern-status"]').forEach(el=>el.onchange=async ()=>{ const i=await idbGet('internships',el.dataset.id); i.status=el.value; await idbPut('internships',i); render(); });
+  document.querySelectorAll('[data-act="intern-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('internships',el.dataset.id); render(); });
+  const inAddBtn = document.getElementById('inAddBtn');
+  if(inAddBtn) inAddBtn.onclick = async ()=>{
+    const company=document.getElementById('inCompany').value.trim(); if(!company) return;
+    await idbPut('internships',{id:'in'+Date.now(),company,role:document.getElementById('inRole').value.trim(),status:document.getElementById('inStatus').value,type:document.getElementById('inType').value.trim(),location:document.getElementById('inLocation').value.trim(),startDate:document.getElementById('inStart').value||null,createdAt:new Date().toISOString()});
+    render();
+  };
+  document.querySelectorAll('[data-act="toggle-uni"]').forEach(el=>el.onclick=()=>{ openUniId=(openUniId===el.dataset.id)?null:el.dataset.id; render(); });
+  document.querySelectorAll('[data-act="uni-check"]').forEach(el=>el.onchange=async ()=>{ const u=await idbGet('universities',el.dataset.id); u.checklist=u.checklist||{}; u.checklist[el.dataset.key]=el.checked; await idbPut('universities',u); render(); });
+  document.querySelectorAll('[data-act="uni-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('universities',el.dataset.id); render(); });
+  const uAddBtn = document.getElementById('uAddBtn');
+  if(uAddBtn) uAddBtn.onclick = async ()=>{
+    const name=document.getElementById('uName').value.trim(); if(!name) return;
+    await idbPut('universities',{id:'u'+Date.now(),name,country:document.getElementById('uCountry').value.trim(),program:document.getElementById('uProgram').value.trim(),deadline:document.getElementById('uDeadline').value||null,checklist:{},createdAt:new Date().toISOString()});
+    render();
+  };
+  document.querySelectorAll('[data-act="skill-level"]').forEach(el=>el.onchange=async ()=>{ const s=await idbGet('skills',el.dataset.id); s.level=+el.value; await idbPut('skills',s); render(); });
+  document.querySelectorAll('[data-act="skill-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('skills',el.dataset.id); render(); });
+  const skAddBtn = document.getElementById('skAddBtn');
+  if(skAddBtn) skAddBtn.onclick = async ()=>{
+    const name=document.getElementById('skName').value.trim(); if(!name) return;
+    await idbPut('skills',{id:'sk'+Date.now(),name,category:document.getElementById('skCat').value,level:1,evidence:document.getElementById('skEvidence').value.trim()});
+    render();
+  };
+  document.querySelectorAll('[data-act="resume-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('resumeEntries',el.dataset.id); render(); });
+  const rAddBtn = document.getElementById('rAddBtn');
+  if(rAddBtn) rAddBtn.onclick = async ()=>{
+    const title=document.getElementById('rTitle').value.trim(); if(!title) return;
+    await idbPut('resumeEntries',{id:'r'+Date.now(),section:document.getElementById('rSec').value,title,organization:document.getElementById('rOrg').value.trim(),date:document.getElementById('rDate').value.trim(),description:document.getElementById('rDesc').value.trim()});
+    render();
+  };
+
+  /* -- Knowledge -- */
+  document.querySelectorAll('[data-act="switch-knowledge"]').forEach(el=>el.onclick=()=>{ knowledgeTab=el.dataset.tab; render(); });
+  document.querySelectorAll('[data-act="event-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('events',el.dataset.id); render(); });
+  const evAddBtn = document.getElementById('evAddBtn');
+  if(evAddBtn) evAddBtn.onclick = async ()=>{
+    const title=document.getElementById('evTitle').value.trim(); if(!title) return;
+    await idbPut('events',{id:'ev'+Date.now(),title,etype:document.getElementById('evType').value,date:document.getElementById('evDate').value||null,location:document.getElementById('evLocation').value.trim()});
+    render();
+  };
+  document.querySelectorAll('[data-act="res-status"]').forEach(el=>el.onchange=async ()=>{ const r=await idbGet('resources',el.dataset.id); r.status=el.value; await idbPut('resources',r); render(); });
+  document.querySelectorAll('[data-act="res-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('resources',el.dataset.id); render(); });
+  const resAddBtn = document.getElementById('resAddBtn');
+  if(resAddBtn) resAddBtn.onclick = async ()=>{
+    const title=document.getElementById('resTitle').value.trim(); if(!title) return;
+    await idbPut('resources',{id:'res'+Date.now(),title,rtype:document.getElementById('resType').value,url:document.getElementById('resUrl').value.trim(),status:'saved'});
+    render();
+  };
+  document.querySelectorAll('[data-act="doc-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('documents',el.dataset.id); render(); });
+  const docAddBtn = document.getElementById('docAddBtn');
+  if(docAddBtn) docAddBtn.onclick = async ()=>{
+    const name=document.getElementById('docName').value.trim(); if(!name) return;
+    await idbPut('documents',{id:'doc'+Date.now(),name,category:document.getElementById('docCat').value,url:document.getElementById('docUrl').value.trim()});
+    render();
+  };
+  document.querySelectorAll('[data-act="note-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('notes',el.dataset.id); render(); });
+  const noteAddBtn = document.getElementById('noteAddBtn');
+  if(noteAddBtn) noteAddBtn.onclick = async ()=>{
+    const title=document.getElementById('noteTitle').value.trim(); if(!title) return;
+    await idbPut('notes',{id:'n'+Date.now(),title,content:document.getElementById('noteContent').value,updatedAt:new Date().toISOString()});
+    render();
+  };
+  document.querySelectorAll('[data-act="ach-del"]').forEach(el=>el.onclick=async ()=>{ await idbDel('achievements',el.dataset.id); render(); });
+  const achAddBtn = document.getElementById('achAddBtn');
+  if(achAddBtn) achAddBtn.onclick = async ()=>{
+    const title=document.getElementById('achTitle').value.trim(); if(!title) return;
+    await idbPut('achievements',{id:'ach'+Date.now(),title,atype:document.getElementById('achType').value,date:document.getElementById('achDate').value||null,organization:document.getElementById('achOrg').value.trim(),description:document.getElementById('achDesc').value.trim()});
+    render();
+  };
+
+  const addBtn = document.getElementById('addTaskBtn');
+  if(addBtn){
+    addBtn.onclick = async ()=>{
+      const txt=document.getElementById('newTxt').value.trim(); if(!txt) return;
+      await idbPut('tasks',{id:'t'+Date.now()+Math.random().toString(36).slice(2,6),text:txt,category:document.getElementById('newCat').value,priority:document.getElementById('newPri').value,date:CURRENT_ADD_DATE,projectId:CURRENT_ADD_PROJECT,done:false,createdAt:new Date().toISOString()});
+      document.getElementById('newTxt').value=''; render();
+    };
+    document.getElementById('newTxt').addEventListener('keydown',e=>{ if(e.key==='Enter') addBtn.click(); });
+  }
+  const expBtn = document.querySelector('[data-act="export-data"]');
+  if(expBtn) expBtn.onclick = exportAllData;
+  const impFile = document.getElementById('importFile');
+  if(impFile) impFile.onchange = async ()=>{
+    const file = impFile.files[0]; if(!file) return;
+    if(confirm('This will overwrite any records with matching IDs from the backup. Continue?')){
+      await importAllData(file); render();
+    }
+    impFile.value='';
+  };
+}
+
+setView('dashboard');
+</script>
+</body>
+</html>

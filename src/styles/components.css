@@ -1,0 +1,25 @@
+.iconbtn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;padding:6px 10px;font-size:.8rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.metric .n{font-size:1.5rem;font-weight:700}
+.metric .l{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.focus-card{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-radius:16px;padding:18px 20px;border:none}
+.focus-card .tag{font-size:.68rem;opacity:.85;letter-spacing:.05em;text-transform:uppercase}
+.focus-card h3{margin:6px 0 2px;font-size:1.15rem}
+.focus-card p{margin:0 0 12px;opacity:.9;font-size:.85rem}
+.focus-card .why{font-size:.72rem;opacity:.75;margin-top:10px}
+.focus-empty{color:var(--muted);font-size:.85rem}
+.btn{background:#fff;color:var(--primary);border:none;border-radius:8px;padding:7px 14px;font-size:.82rem;font-weight:600}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border)}
+.task-row:last-child{border-bottom:none}
+.task-row.done .txt{text-decoration:line-through;color:var(--muted)}
+.txt{flex:1;font-size:.87rem}
+.pri{font-size:.62rem;padding:2px 7px;border-radius:6px;color:#fff;flex:0 0 auto;text-transform:uppercase}
+.pri.urgent{background:var(--danger)}.pri.high{background:var(--warning)}.pri.medium{background:var(--primary)}.pri.low{background:var(--muted)}
+.cat{font-size:.68rem;color:var(--muted);flex:0 0 auto}
+.mini{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:6px;padding:3px 7px;font-size:.72rem}
+.empty{color:var(--muted);font-size:.83rem;padding:8px 2px}
+.addbar{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.addbar input[type=text]{flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem}
+.primary{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:600}
+.bar{height:6px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.bar>div{height:100%;background:var(--success);transition:width .3s}

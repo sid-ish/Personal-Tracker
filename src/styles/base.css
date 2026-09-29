@@ -1,0 +1,8 @@
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;height:100%}
+button{font-family:inherit;cursor:pointer}
+h1{font-size:1.4rem;margin:2px 0 2px;letter-spacing:-.01em}
+.date{color:var(--muted);font-size:.85rem;margin-bottom:18px}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--primary)}
+select{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:.8rem}

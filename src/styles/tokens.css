@@ -1,0 +1,10 @@
+/* Design tokens — values moved verbatim from the original file */
+:root{
+  --bg:#F5F7FA;--surface:#fff;--elevated:#fff;--text:#14161c;--muted:#6b7280;--border:#e5e7eb;
+  --primary:#6366F1;--secondary:#8B5CF6;--accent:#06B6D4;--success:#22C55E;--warning:#F59E0B;--danger:#EF4444;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0B0D12;--surface:#11151D;--elevated:#171C26;--text:#eceef2;--muted:#9aa1ad;--border:#232838;}
+}
+:root[data-theme="dark"]{--bg:#0B0D12;--surface:#11151D;--elevated:#171C26;--text:#eceef2;--muted:#9aa1ad;--border:#232838;}
