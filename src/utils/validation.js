@@ -1,3 +1,3 @@
-// Input validation helpers. The original app had none (it only trims and checks for empty strings),
-// so this file is intentionally minimal and holds the one shared check.
 export const isBlank = s => !s || !String(s).trim();
+export const isValidDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '') && !isNaN(new Date(s + 'T00:00:00'));
+export const isHttpUrl = s => { try { const u = new URL(s); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; } };

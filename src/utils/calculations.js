@@ -26,3 +26,24 @@ export function pickFocus(tasks){
 }
 
 export function projStats(tasks,pid){ const ts=tasks.filter(t=>t.projectId===pid); const done=ts.filter(t=>t.done).length; return {total:ts.length,done,pct:ts.length?Math.round(done/ts.length*100):0}; }
+
+/* ---------- Sidharth OS 2.0 additions ---------- */
+export function projectProgress(p, tasks) {
+  const st = projStats(tasks, p.id);
+  if (st.total) return { ...st, source: 'tasks' };
+  const ms = p.milestones || []; const done = ms.filter(m => m.done).length;
+  return { total: ms.length, done, pct: ms.length ? Math.round(done / ms.length * 100) : 0, source: 'milestones' };
+}
+export function nextMilestone(p) { return (p.milestones || []).filter(m => !m.done).sort((a, b) => (a.date || '9999') < (b.date || '9999') ? -1 : 1)[0] || null; }
+export const isWeakTopic = t => t.weak === true || (topicStats(t).theory > 0 && topicStats(t).overall < 35);
+const REV_DAYS = [0, 3, 7, 21];
+/** Spaced-revision interval (days) after a subtopic reaches revision count r (1-3). */
+export const revisionInterval = r => REV_DAYS[r] || 0;
+export function subjectSummary(topics) {
+  const n = topics.length || 1;
+  const overall = Math.round(topics.reduce((a, t) => a + topicStats(t).overall, 0) / n);
+  const subs = topics.flatMap(t => t.subtopics || []);
+  const last = topics.map(t => t.lastStudied).filter(Boolean).sort().pop() || null;
+  const next = topics.map(t => t.nextRevision).filter(Boolean).sort()[0] || null;
+  return { overall, topicCount: topics.length, subCount: subs.length, studied: subs.filter(s => s.s).length, last, next, weak: topics.filter(isWeakTopic) };
+}

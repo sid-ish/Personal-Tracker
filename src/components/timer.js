@@ -1,48 +1,34 @@
+import { focus, displaySec, progress as focusProgress } from '../services/focus/focus.js';
+import { openModal } from './modal.js';
+import { toast } from './toast.js';
 import { render } from '../app/router.js';
-import { appState, resetTimer } from '../app/state.js';
-import { gateService } from '../services/gate-service.js';
-import { todayStr } from '../utils/dates.js';
-import { $ } from '../utils/dom.js';
-import { fmtTime } from '../utils/formatting.js';
+import { updateFocusPill } from './topbar.js';
+import { appState } from '../app/state.js';
+import { fmtHMS } from '../utils/formatting.js';
+import { fmtDuration } from '../utils/dates.js';
+import { esc } from '../utils/escape-html.js';
 
-export function timerElapsedSec(){ return Math.floor((appState.timer.elapsedBase + (appState.timer.running? Date.now()-appState.timer.startedAt:0))/1000); }
-
-export function timerCardHtml(){
-  const sec = timerElapsedSec();
-  const logForm = appState.showTimerLogForm ? `<div class="addbar" style="margin-top:8px">
-    <select id="sessCat"><option value="gate">GATE</option><option value="academic">Academic</option><option value="project">Project</option><option value="personal">Personal</option><option value="other">Other</option></select>
-    <input type="text" id="sessWhat" placeholder="What did you study?">
-    <button class="primary" data-act="timer-save">Save session</button>
-    <button class="mini" data-act="timer-discard">Discard</button>
-  </div>` : '';
-  return `<div class="card section">
-    <h2 style="margin:0 0 8px">Focus timer</h2>
-    <div id="timerDisplay" style="font-size:2rem;font-weight:700;letter-spacing:.02em">${fmtTime(sec)}</div>
-    <div class="addbar" style="margin-top:8px">
-      ${!appState.timer.running? `<button class="primary" data-act="timer-start">Start</button>` : `<button class="mini" data-act="timer-pause">Pause</button>`}
-      <button class="mini" data-act="timer-complete">Complete & log</button>
-      <button class="mini" data-act="timer-reset">Reset</button>
-    </div>
-    ${logForm}
-  </div>`;
+/** Global handler for finished focus sessions — works on any page, and survives reloads (unsaved sessions resurface). */
+export function registerFocusCompletion() {
+  let modalOpen = false;
+  focus.subscribe(ev => {
+    updateFocusPill();
+    if (ev.type === 'tick' || ev.type === 'change') { document.title = focus.isActive() ? `${fmtHMS(displaySec())} · ${focus.get().phase === 'break' ? 'Break' : 'Focus'}` : document.title.replace(/^\d\d:\d\d:\d\d · (Focus|Break)/, 'Sidharth OS'); }
+    if (ev.type === 'change' && appState.view === 'focus') render();
+    if (ev.type !== 'complete' || modalOpen) return;
+    const sum = ev.summary;
+    if (sum.phase === 'break') { toast.info('Break finished. Ready when you are.'); focus.dismiss(); return; }
+    modalOpen = true;
+    const canBreak = sum.mode === 'pomodoro' && sum.breakMin > 0;
+    const save = async c => { c.setLoading(true); await focus.saveSession(sum); toast.success(`Session saved · ${fmtDuration(sum.durationMin)}`); return true; };
+    openModal({ title: 'Focus session completed',
+      body: `<div class="col" style="align-items:center;text-align:center;padding:var(--sp-3) 0"><div class="t-numeric" style="font-size:2.6rem">${fmtDuration(sum.durationMin)}</div><div class="secondary">Duration</div><h3 class="mt-3">${esc(sum.title)}</h3></div>`,
+      actions: [
+        { label: 'Discard', onClick: () => { focus.dismiss(); } },
+        ...(canBreak ? [{ label: `Save & start ${sum.breakMin} min break`, onClick: async c => { await save(c); focus.startBreak(sum.breakMin); } }] : []),
+        { label: 'Save session', variant: 'primary', onClick: async c => { await save(c); focus.dismiss(); } },
+      ],
+      onClose: () => { modalOpen = false; if (focus.get().status === 'done') focus.dismiss(); render(); } });
+  });
 }
-
-/** Updates the on-screen clock once a second while the timer runs (no re-render). */
-export function startTimerTicker() {
-  setInterval(() => { const el = document.getElementById('timerDisplay'); if (el && appState.timer.running) el.textContent = fmtTime(timerElapsedSec()); }, 1000);
-}
-
-export const timerActions = {
-  click: {
-    'timer-start': () => { const t = appState.timer; t.running = true; t.startedAt = Date.now(); },
-    'timer-pause': () => { const t = appState.timer; t.elapsedBase += Date.now() - t.startedAt; t.running = false; },
-    'timer-complete': () => { const t = appState.timer; if (t.running) { t.elapsedBase += Date.now() - t.startedAt; t.running = false; } appState.showTimerLogForm = true; },
-    'timer-reset': () => { resetTimer(); appState.showTimerLogForm = false; },
-    'timer-discard': () => { appState.showTimerLogForm = false; },
-    'timer-save': async () => {
-      const durationMin = Math.max(1, Math.round(timerElapsedSec() / 60));
-      await gateService.sessions.put({ id: 'ss' + Date.now(), date: todayStr(), category: $('sessCat').value, what: $('sessWhat').value.trim(), durationMin, createdAt: new Date().toISOString() });
-      resetTimer(); appState.showTimerLogForm = false;
-    },
-  },
-};
+export const focusProgressPct = () => Math.round(focusProgress() * 100);

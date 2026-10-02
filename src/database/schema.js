@@ -1,6 +1,6 @@
 // IMPORTANT: name and version are unchanged from the original single-file app so existing user data keeps working.
 export const DB_NAME = 'sidharthos';
-export const DB_VERSION = 7;
+export const DB_VERSION = 8; // v8: adds the additive `backgrounds` store; existing stores are untouched
 // keyPath is 'id' for every store except `meta`, which is keyed by 'key'.
 export const STORES = [
   { name: 'tasks', keyPath: 'id' },
@@ -18,6 +18,7 @@ export const STORES = [
   { name: 'resources', keyPath: 'id' },
   { name: 'documents', keyPath: 'id' },
   { name: 'notes', keyPath: 'id' },
-  { name: 'achievements', keyPath: 'id' }
+  { name: 'achievements', keyPath: 'id' },
+  { name: 'backgrounds', keyPath: 'id' }
 ];
 export const ALL_STORES = STORES.map(s => s.name);

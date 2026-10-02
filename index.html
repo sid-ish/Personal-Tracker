@@ -1,11 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sidharth OS — Command Centre</title>
+<meta name="color-scheme" content="dark light">
+<title>Sidharth OS</title>
+<script>
+  // Apply the saved theme before first paint to avoid a flash.
+  (function(){try{var t=localStorage.getItem('sos_theme')||'system',a=localStorage.getItem('sos_accent')||'indigo',r=document.documentElement;
+  if(t==='system')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';r.dataset.theme=t;r.dataset.accent=a;}catch(e){}})();
+</script>
 </head>
 <body>
+<a class="skip-link" href="#view">Skip to content</a>
 <div id="app"></div>
 <script type="module" src="/src/app/app.js"></script>
 </body>

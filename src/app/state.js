@@ -1,22 +1,19 @@
 import { todayStr } from '../utils/dates.js';
 
-/** Single mutable app state (replaces the scattered globals of the original file). */
-const freshTimer = () => ({ running: false, startedAt: null, elapsedBase: 0 });
-
+/** Single mutable app state. Pages read/write it; the router re-renders after actions. */
 export const appState = {
-  view: 'dashboard',
-  gatePaper: 'ME',
-  gateExpanded: new Set(),
-  calMonth: new Date(),
-  calSelected: todayStr(),
-  openProjectId: null,
-  careerTab: 'internships',
-  openUniId: null,
-  knowledgeTab: 'events',
-  timer: freshTimer(),
-  showTimerLogForm: false,
-  addDate: todayStr(),      // date a newly added task gets (was CURRENT_ADD_DATE)
-  addProject: null,         // project a newly added task links to (was CURRENT_ADD_PROJECT)
-  themeIdx: 0,
+  view: 'dashboard', lastView: 'dashboard',
+  params: {},                       // one-shot navigation params (e.g. search result -> GATE topic)
+  gatePaper: 'ME', gateTab: 'subjects', gateSubject: null, gateExpanded: new Set(),
+  calView: 'month',
+  cals: {                           // one entry per reusable-calendar instance
+    main: { month: new Date(), selected: todayStr() }, focus: { month: new Date(), selected: todayStr() },
+    dash: { month: new Date(), selected: todayStr() }, today: { month: new Date(), selected: todayStr() },
+  },
+  openProjectId: null, projectTab: 'overview', projectFilter: 'all',
+  careerTab: 'pipeline', openUniId: null,
+  knowledgeTab: 'all', knowledgeQuery: '', knowledgeTag: null,
+  settingsTab: 'appearance',
+  focusSetup: { title: '', category: 'gate', mode: null, presetId: null, custom: 45 },
+  calSelected: todayStr(),          // kept for compatibility with the original name
 };
-export const resetTimer = () => { appState.timer = freshTimer(); };
