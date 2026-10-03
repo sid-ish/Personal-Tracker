@@ -1,5 +1,6 @@
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
+
 import '../styles/reset.css';
 import '../styles/tokens.css';
 import '../styles/base.css';
@@ -11,9 +12,15 @@ import '../styles/pages/pages.css';
 import '../styles/responsive.css';
 
 import {
+  startCloudRealtime,
+  stopCloudRealtime,
+} from '../services/cloud/cloud-realtime.js';
+
+import {
   handleAuthCallback,
   onAuthStateChange,
   restoreAuthRoute,
+  getCurrentSession,
 } from '../services/auth/auth.js';
 
 import {
@@ -21,10 +28,19 @@ import {
   flushPending,
 } from '../services/cloud/cloud-sync.js';
 
+import {
+  bootstrapFromCloud,
+} from '../services/cloud/cloud-pull.js';
+
 import { initialize } from '../database/db.js';
 import { run as runMigrations } from '../database/migrations.js';
 import { settings } from '../services/settings/settings.js';
-import { initTheme, applyAppearance } from '../services/theme/theme.js';
+
+import {
+  initTheme,
+  applyAppearance,
+} from '../services/theme/theme.js';
+
 import {
   apply as applyBackground,
   reapply,
@@ -68,15 +84,8 @@ import {
 } from '../components/entity-forms.js';
 
 import { initTooltips } from '../components/tooltip.js';
-
-import {
-  registerFocusCompletion,
-} from '../components/timer.js';
-
-import {
-  refreshBadge,
-} from '../components/attention-center.js';
-
+import { registerFocusCompletion } from '../components/timer.js';
+import { refreshBadge } from '../components/attention-center.js';
 import { openPalette } from '../components/command-palette.js';
 import { startClocks } from '../components/clock.js';
 import { focus } from '../services/focus/focus.js';
@@ -84,12 +93,81 @@ import { debounce } from '../utils/dom.js';
 
 registerGlobalErrorHandlers();
 
+/*
+ * Prevent duplicate cloud-bootstrap operations if multiple auth
+ * events arrive during startup/login.
+ */
+let cloudBootstrapPromise = null;
+
+function startCloudBootstrap(session) {
+  if (!session) {
+    return;
+  }
+
+  if (cloudBootstrapPromise) {
+    return;
+  }
+
+  cloudBootstrapPromise = bootstrapFromCloud()
+    .then(result => {
+      if (!result?.bootstrapped) {
+        return;
+      }
+
+      console.log(
+        '[CloudBootstrap] Cloud data restored:',
+        result.stores ?? {}
+      );
+
+      /*
+       * The application may already have rendered from IndexedDB
+       * before the cloud pull completed.
+       *
+       * Reload so the normal boot process reads the restored
+       * IndexedDB data and renders the complete application.
+       */
+      window.location.reload();
+    })
+    .catch(error => {
+      /*
+       * Cloud bootstrap must NEVER prevent the local-first app
+       * from working.
+       */
+      console.error(
+        '[CloudBootstrap] Failed:',
+        error
+      );
+    })
+    .finally(() => {
+      cloudBootstrapPromise = null;
+    });
+}
+
+/*
+ * Start all cloud functionality for an authenticated session.
+ *
+ * IndexedDB remains the local source of truth.
+ * Supabase is the shadow-sync + cross-device layer.
+ */
+function startCloudForSession(session, shouldBootstrap = false) {
+  if (!session) {
+    return;
+  }
+
+  void initCloudSync();
+  void flushPending();
+  void startCloudRealtime();
+
+  if (shouldBootstrap) {
+    startCloudBootstrap(session);
+  }
+}
+
 async function boot() {
   // ------------------------------------------------------------
-  // LOCAL APPLICATION BOOT
+  // LOCAL-FIRST BOOT
   // ------------------------------------------------------------
 
-  // IndexedDB remains the primary/local source of truth.
   await initialize();
   await runMigrations();
   await settings.load();
@@ -152,7 +230,10 @@ async function boot() {
 
   fit();
 
-  tablet.addEventListener('change', fit);
+  tablet.addEventListener(
+    'change',
+    fit
+  );
 
   // ------------------------------------------------------------
   // KEYBOARD SHORTCUTS
@@ -164,22 +245,29 @@ async function boot() {
     toggleSidebar,
   });
 
-  document.addEventListener('keydown', e => {
-    if (
-      e.key === 'Escape' &&
-      document.documentElement.dataset.drawer === 'open'
-    ) {
-      document.documentElement.dataset.drawer = 'closed';
+  document.addEventListener(
+    'keydown',
+    e => {
+      if (
+        e.key === 'Escape' &&
+        document.documentElement.dataset.drawer === 'open'
+      ) {
+        document.documentElement.dataset.drawer = 'closed';
+      }
     }
-  });
+  );
 
   // ------------------------------------------------------------
-  // SUPABASE PKCE CALLBACK
+  // AUTH / PKCE CALLBACK
   // ------------------------------------------------------------
 
-  // Supabase Auth handles the PKCE flow.
-  // We only clean up the callback URL and recover the
-  // original hash route.
+  /*
+   * Supabase handles the PKCE session exchange.
+   * handleAuthCallback() cleans OAuth parameters and preserves
+   * the intended route.
+   *
+   * Authentication failures never prevent local boot.
+   */
   try {
     await handleAuthCallback();
   } catch (e) {
@@ -196,67 +284,112 @@ async function boot() {
   await initRouter();
 
   // ------------------------------------------------------------
-  // AUTH STATE
+  // AUTH STATE + CLOUD SYNC
   // ------------------------------------------------------------
 
-  onAuthStateChange((event, session) => {
-    window.__sosAuth = {
-      event,
-      session,
-      user: session?.user ?? null,
-    };
+  onAuthStateChange(
+    (event, session) => {
+      window.__sosAuth = {
+        event,
+        session,
+        user: session?.user ?? null,
+      };
 
-    // Restore the route that was active before
-    // Google OAuth redirected away.
-    if (
-      event === 'INITIAL_SESSION' ||
-      event === 'SIGNED_IN'
-    ) {
-      restoreAuthRoute();
-    }
+      // --------------------------------------------------------
+      // RESTORE PRE-AUTH ROUTE
+      // --------------------------------------------------------
 
-    // ----------------------------------------------------------
-    // CLOUD SHADOW SYNC
-    // ----------------------------------------------------------
-    //
-    // Authenticated sessions enable the cloud mirror.
-    // IndexedDB remains authoritative.
-    //
-    // INITIAL_SESSION:
-    //   Start cloud sync when an existing session is restored.
-    //
-    // SIGNED_IN:
-    //   Start cloud sync after Google login.
-    //
-    // TOKEN_REFRESHED:
-    //   Ensure sync still has the current authenticated user.
-    //
+      if (
+        event === 'INITIAL_SESSION' ||
+        event === 'SIGNED_IN'
+      ) {
+        restoreAuthRoute();
+      }
 
-    if (
-      event === 'INITIAL_SESSION' ||
-      event === 'SIGNED_IN' ||
-      event === 'TOKEN_REFRESHED'
-    ) {
-      void initCloudSync();
-      void flushPending();
-    }
+      // --------------------------------------------------------
+      // AUTHENTICATED CLOUD SERVICES
+      // --------------------------------------------------------
 
-    // ----------------------------------------------------------
-    // NOTIFY UI
-    // ----------------------------------------------------------
-
-    document.dispatchEvent(
-      new CustomEvent('sos-auth-change', {
-        detail: {
-          event,
+      if (
+        event === 'INITIAL_SESSION' ||
+        event === 'SIGNED_IN'
+      ) {
+        startCloudForSession(
           session,
-        },
-      })
-    );
-  });
+          true
+        );
+      }
+
+      if (event === 'TOKEN_REFRESHED') {
+        startCloudForSession(
+          session,
+          false
+        );
+      }
+
+      // --------------------------------------------------------
+      // SIGN OUT
+      // --------------------------------------------------------
+
+      if (event === 'SIGNED_OUT') {
+        void stopCloudRealtime();
+      }
+
+      // --------------------------------------------------------
+      // INFORM THE UI
+      // --------------------------------------------------------
+
+      document.dispatchEvent(
+        new CustomEvent(
+          'sos-auth-change',
+          {
+            detail: {
+              event,
+              session,
+            },
+          }
+        )
+      );
+    }
+  );
 
   // ------------------------------------------------------------
-  // APPEARANCE / BACKGROUND
+  // AUTH SESSION RECOVERY
+  // ------------------------------------------------------------
+
+  /*
+   * The auth listener can be registered after Supabase has already
+   * established the current session during startup.
+   *
+   * Explicitly inspect the current session so a fresh device still
+   * gets cloud bootstrap + Realtime even when INITIAL_SESSION was
+   * emitted before the listener existed.
+   */
+  try {
+    const currentSession =
+      await getCurrentSession();
+
+    if (currentSession) {
+      window.__sosAuth = {
+        event: 'CURRENT_SESSION',
+        session: currentSession,
+        user: currentSession.user ?? null,
+      };
+
+      startCloudForSession(
+        currentSession,
+        true
+      );
+    }
+  } catch (error) {
+    console.error(
+      '[Auth] Could not restore current session:',
+      error
+    );
+  }
+
+  // ------------------------------------------------------------
+  // APPEARANCE
   // ------------------------------------------------------------
 
   applyAppearance();
