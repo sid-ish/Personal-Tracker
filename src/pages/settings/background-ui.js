@@ -30,10 +30,13 @@ export async function backgroundHtml() {
   const slider = (label, key, min, max, unit = '%') => `<div class="slider-row"><label for="bgs-${key}">${label}</label><input type="range" id="bgs-${key}" data-act="bg-slider" data-key="${key}" min="${min}" max="${max}" value="${cur[key] ?? 0}"><span class="tnum muted" id="bgsv-${key}">${cur[key] ?? 0}${unit}</span></div>`;
   const sel = (label, key, opts) => `<div class="field"><label for="bgsel-${key}">${label}</label><select class="select" id="bgsel-${key}" data-act="bg-select" data-key="${key}">${opts.map(([v, l]) => `<option value="${v}" ${(cur[key] || opts[0][0]) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
   const hasImg = ['builtin', 'custom'].includes(cur.type);
+  // Page overrides that are stored but not applied because per-page mode is off (Focus always applies, so it is never inactive).
+  const inactive = b.perPage ? [] : TARGETS.filter(([k]) => k !== 'global' && k !== 'focus' && b.pages[k]).map(([, l]) => l);
   return `<section class="card" id="background" aria-labelledby="bgh"><div class="card-title"><h3 id="bgh">Background</h3><div class="row"><button class="btn sm" data-act="bg-remove">Remove background</button><button class="btn sm" data-act="bg-reset">Reset</button></div></div>
     <div class="row wrap mb-4"><div class="segmented" role="group" aria-label="Apply background to">${TARGETS.map(([k, l]) => `<button data-act="bg-target" data-t="${k}" aria-pressed="${target === k}" ${k !== 'global' && k !== 'focus' && !b.perPage ? 'disabled style="opacity:.45;pointer-events:none"' : ''}>${l}</button>`).join('')}</div>
       ${target !== 'global' && cfgOf(target) ? `<button class="btn sm ghost" data-act="bg-inherit">Use global background</button>` : ''}</div>
     <div class="set-row" style="border:0;padding-top:0"><div class="info"><div class="t-small" style="font-weight:600">Different background per page</div><div class="t-caption muted">Off by default. Dashboard, GATE and Projects follow the global background unless this is on. Focus mode can always have its own.</div></div><label class="switch"><input type="checkbox" data-act="bg-perpage" ${b.perPage ? 'checked' : ''} aria-label="Different background per page"><span></span></label></div>
+    ${inactive.length ? `<p class="t-caption muted mb-4" id="bg-inactive-note">Saved but inactive while this is off: ${inactive.map(esc).join(', ')}. Turn it on to use ${inactive.length === 1 ? 'that background' : 'those backgrounds'} again.</p>` : ''}
     ${target !== 'global' && !cfgOf(target) ? `<p class="t-caption muted mb-4">${TARGETS.find(x => x[0] === target)[1]} currently uses the global background. Pick one below to override it.</p>` : ''}
     <div class="label mb-2">Solid</div><div class="bg-grid mb-4">${solid}</div><div class="label mb-2">Gradients</div><div class="bg-grid mb-4">${grad}</div>
     <div class="label mb-2">Images</div><div class="bg-grid mb-4">${built}</div>
@@ -62,7 +65,7 @@ export const backgroundActions = {
     'bg-inherit': async () => { const b = structuredClone(settings.get('background')); delete b.pages[target]; settings.set('background', b); await bg.syncActiveFlags(); await bg.reapply(); toast.info('Using the global background'); },
     'bg-upload': () => { startUpload(); return false; },
     'bg-menu': async el => { const rec = (await bg.listCustom()).find(r => r.id === el.dataset.id); if (!rec) return false;
-      openMenu(el, [{ label: 'Use', icon: 'Check', onClick: async () => { const cfg = pick('custom', rec.id); draft = { cfg }; await bg.startPreview(cfg); await render(); } }, { label: 'Rename', icon: 'Pencil', onClick: () => renameDialog(rec) }, { separator: true }, { label: 'Delete', icon: 'Trash2', danger: true, onClick: async () => { if (!await confirmModal({ title: 'Delete this background?', message: `“${rec.name}” will be removed from your gallery. If it is in use, the default background is restored.`, confirmLabel: 'Delete', danger: true })) return; await bg.deleteCustom(rec.id); draft = null; toast.success('Background deleted'); await render(); } }], { align: 'right' }); return false; },
+      openMenu(el, [{ label: 'Use', icon: 'Check', onClick: async () => { const cfg = pick('custom', rec.id); draft = { cfg }; await bg.startPreview(cfg); await render(); } }, { label: 'Rename', icon: 'Pencil', onClick: () => renameDialog(rec) }, { separator: true }, { label: 'Delete', icon: 'Trash2', danger: true, onClick: async () => { if (!await confirmModal({ title: 'Delete this background?', message: `“${rec.name}” will be removed from your gallery. If it is in use, the default background is restored.`, confirmLabel: 'Delete', danger: true })) return; const { wasPreviewing } = await bg.deleteCustom(rec.id); if (wasPreviewing) draft = null; toast.success('Background deleted'); await render(); } }], { align: 'right' }); return false; },
   },
   change: {
     'bg-perpage': async el => { const b = structuredClone(settings.get('background')); b.perPage = el.checked; settings.set('background', b); if (!el.checked && !['global', 'focus'].includes(target)) setTarget('global'); await bg.reapply(); },
@@ -84,9 +87,10 @@ function startUpload() {
     const file = input.files[0]; input.remove(); if (!file) return;
     let proc; try { proc = await bg.processUpload(file); } catch (e) { toast.error(e.message); return; }
     const base = file.name.replace(/\.[^.]+$/, '').slice(0, 40);
-    const ctx = openModal({ title: 'Custom background', description: 'Check the preview and give it a name.', body: `<img class="preview-img mb-4" src="${proc.previewUrl}" alt="Preview of the uploaded background"><div class="field"><label for="bgName">Name</label><input class="input" id="bgName" value="${esc(base)}" maxlength="40" autocomplete="off"><span class="hint">${proc.width}×${proc.height} · ${(proc.size / 1024).toFixed(0)} KB after optimising</span></div>`,
+    let ctx; try { ctx = openModal({ title: 'Custom background', description: 'Check the preview and give it a name.', body: `<img class="preview-img mb-4" src="${proc.previewUrl}" alt="Preview of the uploaded background"><div class="field"><label for="bgName">Name</label><input class="input" id="bgName" value="${esc(base)}" maxlength="40" autocomplete="off"><span class="hint">${proc.width}×${proc.height} · ${(proc.size / 1024).toFixed(0)} KB after optimising</span></div>`,
       onClose: () => URL.revokeObjectURL(proc.previewUrl),
-      actions: [{ label: 'Cancel' }, { label: 'Save to gallery', onClick: async c => save(c, false), close: false }, { label: 'Use background', variant: 'primary', onClick: async c => save(c, true), close: false }] });
+      actions: [{ label: 'Cancel' }, { label: 'Save to gallery', onClick: async c => save(c, false), close: false }, { label: 'Use background', variant: 'primary', onClick: async c => save(c, true), close: false }] }); }
+    catch (e) { URL.revokeObjectURL(proc.previewUrl); throw e; }
     async function save(c, use) {
       const name = c.el.querySelector('#bgName').value.trim(); if (!name) { c.setError('Enter a name for this background.'); return false; }
       c.setLoading(true);

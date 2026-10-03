@@ -13,11 +13,24 @@ let s = idle();
 const subs = new Set();
 let timer = null;
 
-const load = () => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && j.status) s = { ...idle(), ...j }; } catch { /* ignore */ } };
+const STATUSES = ['running', 'paused', 'done'];
+const num = (v, fallback = 0) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : fallback);
+/** Restores the saved session, repairing values a hand-edited or corrupted entry could contain (they would show NaN or negative time). */
+const load = () => {
+  try {
+    const j = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (!j || !STATUSES.includes(j.status)) return;
+    s = { ...idle(), ...j, accMs: num(j.accMs), targetSec: num(j.targetSec) };
+    if (s.status === 'running') {
+      if (!Number.isFinite(s.startedAt)) { s.status = 'paused'; s.startedAt = null; }            // no valid start time: keep what was accumulated
+      else if (s.startedAt > Date.now()) s.startedAt = Date.now();                                // clock moved backwards: never negative
+    }
+  } catch { /* ignore */ }
+};
 const save = () => { try { s.status === 'idle' ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* ignore */ } };
 const emit = (type, extra = {}) => subs.forEach(fn => fn({ type, ...extra }));
 
-export const elapsedMs = () => s.accMs + (s.status === 'running' ? Date.now() - s.startedAt : 0);
+export const elapsedMs = () => Math.max(0, s.accMs + (s.status === 'running' ? Date.now() - s.startedAt : 0));
 export const elapsedSec = () => Math.floor(elapsedMs() / 1000);
 export const remainingSec = () => s.targetSec ? Math.max(0, s.targetSec - elapsedMs() / 1000) : null;
 export const progress = () => s.targetSec ? Math.min(1, elapsedMs() / 1000 / s.targetSec) : 0;

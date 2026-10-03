@@ -1,6 +1,7 @@
-import { all, bulkPut, replaceAll, count, clear } from '../../database/queries.js';
+import { all, mergeAll, replaceAll, count, clear } from '../../database/queries.js';
 import { ALL_STORES, STORES, DB_VERSION } from '../../database/schema.js';
-import { exportCustom, importCustomRecords } from '../background/background.js';
+import { exportCustom, importCustomRecords, repairReferences, clearUrlCaches } from '../background/background.js';
+import { validateRecord, validateBackground } from './validate.js';
 import { settings } from '../settings/settings.js';
 import { todayStr } from '../../utils/dates.js';
 
@@ -46,21 +47,31 @@ export async function readBackupFile(file) {
   if (!json || typeof json !== 'object' || Array.isArray(json)) { res.errors.push('This file doesn’t look like a Sidharth OS backup.'); return res; }
   if (json.format && json.format !== FORMAT) { res.errors.push('This file was not exported by Sidharth OS.'); return res; }
   if (json.version > FORMAT_VERSION) res.warnings.push('This backup was made by a newer version. Unknown data will be ignored.');
+  if (json.stores !== undefined && (!json.stores || typeof json.stores !== 'object' || Array.isArray(json.stores))) { res.errors.push('The “stores” section of this backup is malformed.'); return res; }
   const src = json.stores || (res.legacy = true, json);
-  const clean = {};
+  const clean = {}, problems = [];
+  const report = (where, i, list) => { if (problems.length < 6) problems.push(`${where} #${i + 1}: ${list.join('; ')}.`); else if (problems.length === 6) problems.push('…and more.'); res.skipped++; };
   for (const s of JSON_STORES) {
     if (!(s in src)) continue;
     if (!Array.isArray(src[s])) { res.warnings.push(`“${s}” is not a list and was skipped.`); continue; }
-    const good = src[s].filter(r => r && typeof r === 'object' && r[keyOf[s]] !== undefined && r[keyOf[s]] !== null && r[keyOf[s]] !== '');
-    res.skipped += src[s].length - good.length; if (src[s].length !== good.length) res.warnings.push(`${src[s].length - good.length} invalid record(s) in “${s}” will be skipped.`);
-    clean[s] = good; res.counts[s] = good.length; res.total += good.length;
+    src[s].forEach((r, i) => { const p = validateRecord(s, r, keyOf[s]); if (p.length) report(`“${s}”`, i, p); });
+    clean[s] = src[s]; res.counts[s] = src[s].length; res.total += src[s].length;
   }
+  if (json.backgrounds !== undefined && !Array.isArray(json.backgrounds)) problems.push('“backgrounds” is not a list.');
+  else (json.backgrounds || []).forEach((b, i) => { const p = validateBackground(b); if (p.length) report('Background', i, p); });
+  // Nothing is imported unless EVERY record is valid, so a bad backup can never be partly applied.
+  if (problems.length) { res.errors.push('This backup contains invalid data, so nothing was imported:', ...problems); return res; }
   const unknown = Object.keys(src).filter(k => !ALL_STORES.includes(k) && !['format', 'version'].includes(k)); if (unknown.length && !res.legacy) res.warnings.push('Ignored unknown sections: ' + unknown.join(', '));
-  res.backgrounds = Array.isArray(json.backgrounds) ? json.backgrounds.filter(b => b?.id && typeof b.dataUrl === 'string' && b.dataUrl.startsWith('data:image/')).length : 0;
+  res.backgrounds = Array.isArray(json.backgrounds) ? json.backgrounds.length : 0;
   if (!res.total && !res.backgrounds) { res.errors.push('This backup contains no records.'); return res; }
   res.ok = true; res.data = { stores: clean, backgrounds: json.backgrounds || [] }; res.exportedAt = json.exportedAt || null; return res;
 }
-/** merge: upserts by ID, nothing is deleted. replace: swaps all data in one atomic transaction (a failure leaves the current data intact). */
+/**
+ * merge: upserts by ID, nothing is deleted. replace: swaps all data.
+ * Both modes write every affected store (backgrounds included) inside ONE IndexedDB transaction, so a failure
+ * rolls everything back and leaves the current data untouched. Anything that can fail (decoding the embedded
+ * images) happens BEFORE the transaction opens.
+ */
 export async function importBackup(parsed, mode = 'merge') {
   const bgs = await importCustomRecords(parsed.data.backgrounds);
   if (mode === 'replace') {
@@ -68,10 +79,13 @@ export async function importBackup(parsed, mode = 'merge') {
     for (const s of JSON_STORES) map[s] = parsed.data.stores[s] || [];
     map.backgrounds = bgs; await replaceAll(map);
   } else {
-    for (const s of JSON_STORES) if (parsed.data.stores[s]?.length) await bulkPut(s, parsed.data.stores[s]);
-    if (bgs.length) await bulkPut('backgrounds', bgs);
+    const map = {}; for (const s of JSON_STORES) if (parsed.data.stores[s]?.length) map[s] = parsed.data.stores[s];
+    if (bgs.length) map.backgrounds = bgs;
+    await mergeAll(map);
   }
-  await settings.load();
+  // The data is committed from here on. Follow-up tidying must not make a successful import look like a failure.
+  try { await settings.load(); clearUrlCaches(); await repairReferences(); }
+  catch (e) { console.error('[backup] import committed, but follow-up refresh failed', e); }
 }
 export async function storageInfo() {
   const counts = {}; let total = 0; for (const s of ALL_STORES) { counts[s] = await count(s); total += counts[s]; }
