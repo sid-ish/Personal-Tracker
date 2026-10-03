@@ -1,4 +1,5 @@
 import { getDatabase } from './db.js';
+import { mirrorPut, mirrorDelete } from '../services/cloud/cloud-sync.js';
 
 const run = async (store, mode, fn) => {
   const db = await getDatabase();
@@ -12,8 +13,24 @@ const run = async (store, mode, fn) => {
 
 export const all = store => run(store, 'readonly', s => s.getAll());
 export const get = (store, key) => run(store, 'readonly', s => s.get(key));
-export const put = (store, val) => run(store, 'readwrite', s => s.put(val));
-export const del = (store, key) => run(store, 'readwrite', s => s.delete(key));
+export const put = async (store, val) => {
+  await run(store, 'readwrite', s => s.put(val));
+
+  // IndexedDB remains authoritative.
+  // Cloud mirroring never blocks the local write.
+  void mirrorPut(store, val);
+
+  return val;
+};
+
+export const del = async (store, key) => {
+  await run(store, 'readwrite', s => s.delete(key));
+
+  // Mirror deletes after the local delete succeeds.
+  void mirrorDelete(store, key);
+
+  return key;
+};
 /** Writes many records to one store in a single transaction (all-or-nothing). */
 export async function bulkPut(store, records) {
   if (!records.length) return;

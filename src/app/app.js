@@ -14,26 +14,69 @@ import {
   handleAuthCallback,
   onAuthStateChange,
   restoreAuthRoute,
-} from '../services/auth/auth.js';;
+} from '../services/auth/auth.js';
+
+import {
+  initCloudSync,
+  flushPending,
+} from '../services/cloud/cloud-sync.js';
 
 import { initialize } from '../database/db.js';
 import { run as runMigrations } from '../database/migrations.js';
 import { settings } from '../services/settings/settings.js';
 import { initTheme, applyAppearance } from '../services/theme/theme.js';
-import { apply as applyBackground, reapply } from '../services/background/background.js';
-import { registerActions, registerEvents } from './actions.js';
+import {
+  apply as applyBackground,
+  reapply,
+} from '../services/background/background.js';
+
+import {
+  registerActions,
+  registerEvents,
+} from './actions.js';
+
 import { initRouter } from './router.js';
-import { registerGlobalErrorHandlers, handleError, showRecovery } from './errors.js';
+
+import {
+  registerGlobalErrorHandlers,
+  handleError,
+  showRecovery,
+} from './errors.js';
+
 import { initShortcuts } from './shortcuts.js';
-import { sidebarHtml, setSidebarCollapsed, toggleSidebar } from '../components/sidebar.js';
+
+import {
+  sidebarHtml,
+  setSidebarCollapsed,
+  toggleSidebar,
+} from '../components/sidebar.js';
+
 import { bottomNavHtml } from '../components/bottom-nav.js';
-import { topbarHtml, shellActions, updateFocusPill } from '../components/topbar.js';
+
+import {
+  topbarHtml,
+  shellActions,
+  updateFocusPill,
+} from '../components/topbar.js';
+
 import { taskActions } from '../components/task-list.js';
 import { calendarActions } from '../components/calendar.js';
-import { entityFormActions, openNew } from '../components/entity-forms.js';
+
+import {
+  entityFormActions,
+  openNew,
+} from '../components/entity-forms.js';
+
 import { initTooltips } from '../components/tooltip.js';
-import { registerFocusCompletion } from '../components/timer.js';
-import { refreshBadge } from '../components/attention-center.js';
+
+import {
+  registerFocusCompletion,
+} from '../components/timer.js';
+
+import {
+  refreshBadge,
+} from '../components/attention-center.js';
+
 import { openPalette } from '../components/command-palette.js';
 import { startClocks } from '../components/clock.js';
 import { focus } from '../services/focus/focus.js';
@@ -42,6 +85,11 @@ import { debounce } from '../utils/dom.js';
 registerGlobalErrorHandlers();
 
 async function boot() {
+  // ------------------------------------------------------------
+  // LOCAL APPLICATION BOOT
+  // ------------------------------------------------------------
+
+  // IndexedDB remains the primary/local source of truth.
   await initialize();
   await runMigrations();
   await settings.load();
@@ -53,17 +101,31 @@ async function boot() {
       <div id="bg-img"></div>
       <div id="bg-overlay"></div>
     </div>
+
     <div class="app" data-sidebar="expanded">
       ${sidebarHtml()}
+
       <div class="main-col">
         ${topbarHtml()}
-        <main class="view" id="view" tabindex="-1" aria-live="polite"></main>
+
+        <main
+          class="view"
+          id="view"
+          tabindex="-1"
+          aria-live="polite"
+        ></main>
       </div>
     </div>
+
     ${bottomNavHtml()}
   `;
 
-  [shellActions, taskActions, calendarActions, entityFormActions].forEach(registerActions);
+  [
+    shellActions,
+    taskActions,
+    calendarActions,
+    entityFormActions,
+  ].forEach(registerActions);
 
   registerEvents();
   initTooltips();
@@ -71,17 +133,30 @@ async function boot() {
   focus.init();
   registerFocusCompletion();
 
-  // Sidebar: persisted choice on desktop, auto-collapsed on tablet widths
-  const tablet = matchMedia('(min-width:761px) and (max-width:1100px)');
+  // ------------------------------------------------------------
+  // SIDEBAR
+  // ------------------------------------------------------------
+
+  const tablet = matchMedia(
+    '(min-width:761px) and (max-width:1100px)'
+  );
+
   const fit = () => {
     setSidebarCollapsed(
-      tablet.matches ? true : settings.get('sidebarCollapsed'),
+      tablet.matches
+        ? true
+        : settings.get('sidebarCollapsed'),
       false
     );
   };
 
   fit();
+
   tablet.addEventListener('change', fit);
+
+  // ------------------------------------------------------------
+  // KEYBOARD SHORTCUTS
+  // ------------------------------------------------------------
 
   initShortcuts({
     openPalette,
@@ -98,49 +173,131 @@ async function boot() {
     }
   });
 
+  // ------------------------------------------------------------
+  // SUPABASE PKCE CALLBACK
+  // ------------------------------------------------------------
+
+  // Supabase Auth handles the PKCE flow.
+  // We only clean up the callback URL and recover the
+  // original hash route.
   try {
     await handleAuthCallback();
   } catch (e) {
-    console.error('[Auth] callback failed', e);
+    console.error(
+      '[Auth] callback failed',
+      e
+    );
   }
 
-await initRouter();
+  // ------------------------------------------------------------
+  // ROUTER
+  // ------------------------------------------------------------
 
-onAuthStateChange((event, session) => {
-  window.__sosAuth = {
-    event,
-    session,
-    user: session?.user ?? null,
-  };
+  await initRouter();
 
-  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-    restoreAuthRoute();
-  }
+  // ------------------------------------------------------------
+  // AUTH STATE
+  // ------------------------------------------------------------
 
-  document.dispatchEvent(
-    new CustomEvent('sos-auth-change', {
-      detail: {
-        event,
-        session,
-      },
-    })
-  );
-});
+  onAuthStateChange((event, session) => {
+    window.__sosAuth = {
+      event,
+      session,
+      user: session?.user ?? null,
+    };
+
+    // Restore the route that was active before
+    // Google OAuth redirected away.
+    if (
+      event === 'INITIAL_SESSION' ||
+      event === 'SIGNED_IN'
+    ) {
+      restoreAuthRoute();
+    }
+
+    // ----------------------------------------------------------
+    // CLOUD SHADOW SYNC
+    // ----------------------------------------------------------
+    //
+    // Authenticated sessions enable the cloud mirror.
+    // IndexedDB remains authoritative.
+    //
+    // INITIAL_SESSION:
+    //   Start cloud sync when an existing session is restored.
+    //
+    // SIGNED_IN:
+    //   Start cloud sync after Google login.
+    //
+    // TOKEN_REFRESHED:
+    //   Ensure sync still has the current authenticated user.
+    //
+
+    if (
+      event === 'INITIAL_SESSION' ||
+      event === 'SIGNED_IN' ||
+      event === 'TOKEN_REFRESHED'
+    ) {
+      void initCloudSync();
+      void flushPending();
+    }
+
+    // ----------------------------------------------------------
+    // NOTIFY UI
+    // ----------------------------------------------------------
+
+    document.dispatchEvent(
+      new CustomEvent('sos-auth-change', {
+        detail: {
+          event,
+          session,
+        },
+      })
+    );
+  });
+
+  // ------------------------------------------------------------
+  // APPEARANCE / BACKGROUND
+  // ------------------------------------------------------------
 
   applyAppearance();
+
   await applyBackground();
+
   updateFocusPill();
 
-  const bump = debounce(() => refreshBadge(), 400);
+  // ------------------------------------------------------------
+  // ATTENTION BADGE
+  // ------------------------------------------------------------
+
+  const bump = debounce(
+    () => refreshBadge(),
+    400
+  );
 
   bump();
-  window.addEventListener('hashchange', bump);
-  document.addEventListener('click', bump);
-  setInterval(refreshBadge, 60000);
 
-  window.__sos = { ready: true };
+  window.addEventListener(
+    'hashchange',
+    bump
+  );
 
-  
+  document.addEventListener(
+    'click',
+    bump
+  );
+
+  setInterval(
+    refreshBadge,
+    60000
+  );
+
+  // ------------------------------------------------------------
+  // APP READY
+  // ------------------------------------------------------------
+
+  window.__sos = {
+    ready: true,
+  };
 }
 
 boot().catch(e => {
